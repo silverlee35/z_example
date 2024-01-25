@@ -120,6 +120,8 @@ zephyr_library_sources(
     ${LVGL_DIR}/src/draw/vg_lite/lv_vg_lite_decoder.c
     ${LVGL_DIR}/src/draw/vg_lite/lv_vg_lite_math.c
     ${LVGL_DIR}/src/draw/vg_lite/lv_vg_lite_path.c
+    ${LVGL_DIR}/src/draw/vg_lite/lv_vg_lite_pending.c
+    ${LVGL_DIR}/src/draw/vg_lite/lv_vg_lite_stroke.c
     ${LVGL_DIR}/src/draw/vg_lite/lv_vg_lite_utils.c
 
     ${LVGL_DIR}/src/font/lv_binfont_loader.c
@@ -194,7 +196,7 @@ zephyr_library_sources(
 
     ${LVGL_DIR}/src/misc/cache/lv_cache.c
     ${LVGL_DIR}/src/misc/cache/lv_cache_entry.c
-    ${LVGL_DIR}/src/misc/cache/_lv_cache_lru_rb.c
+    ${LVGL_DIR}/src/misc/cache/lv_cache_lru_rb.c
     ${LVGL_DIR}/src/misc/cache/lv_image_cache.c
     ${LVGL_DIR}/src/misc/lv_anim.c
     ${LVGL_DIR}/src/misc/lv_anim_timeline.c
@@ -206,10 +208,12 @@ zephyr_library_sources(
     ${LVGL_DIR}/src/misc/lv_color_op.c
     ${LVGL_DIR}/src/misc/lv_event.c
     ${LVGL_DIR}/src/misc/lv_fs.c
+    ${LVGL_DIR}/src/misc/lv_iter.c
     ${LVGL_DIR}/src/misc/lv_ll.c
     ${LVGL_DIR}/src/misc/lv_log.c
     ${LVGL_DIR}/src/misc/lv_lru.c
     ${LVGL_DIR}/src/misc/lv_math.c
+    ${LVGL_DIR}/src/misc/lv_matrix.c
     ${LVGL_DIR}/src/misc/lv_palette.c
     ${LVGL_DIR}/src/misc/lv_profiler_builtin.c
     ${LVGL_DIR}/src/misc/lv_rb.c
@@ -221,6 +225,7 @@ zephyr_library_sources(
     ${LVGL_DIR}/src/misc/lv_timer.c
     ${LVGL_DIR}/src/misc/lv_utils.c
 
+    ${LVGL_DIR}/src/osal/lv_os.c
     ${LVGL_DIR}/src/osal/lv_os_none.c
 
     ${LVGL_DIR}/src/others/file_explorer/lv_file_explorer.c
@@ -273,6 +278,14 @@ zephyr_library_sources(
     ${LVGL_DIR}/src/widgets/menu/lv_menu.c
     ${LVGL_DIR}/src/widgets/msgbox/lv_msgbox.c
     ${LVGL_DIR}/src/widgets/objx_templ/lv_objx_templ.c
+    ${LVGL_DIR}/src/widgets/property/lv_dropdown_properties.c
+    ${LVGL_DIR}/src/widgets/property/lv_image_properties.c
+    ${LVGL_DIR}/src/widgets/property/lv_keyboard_properties.c
+    ${LVGL_DIR}/src/widgets/property/lv_label_properties.c
+    ${LVGL_DIR}/src/widgets/property/lv_obj_properties.c
+    ${LVGL_DIR}/src/widgets/property/lv_roller_properties.c
+    ${LVGL_DIR}/src/widgets/property/lv_style_properties.c
+    ${LVGL_DIR}/src/widgets/property/lv_textarea_properties.c
     ${LVGL_DIR}/src/widgets/roller/lv_roller.c
     ${LVGL_DIR}/src/widgets/scale/lv_scale.c
     ${LVGL_DIR}/src/widgets/slider/lv_slider.c
