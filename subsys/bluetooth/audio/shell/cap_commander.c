@@ -103,6 +103,16 @@ static void cap_broadcast_reception_start_cb(struct bt_conn *conn, int err)
 
 	shell_print(ctx_shell, "Broadcast reception start completed");
 }
+
+static void cap_broadcast_reception_stop_cb(struct bt_conn *conn, int err)
+{
+	if (err != 0) {
+		shell_error(ctx_shell, "Broadcast reception stop failed (%d)", err);
+		return;
+	}
+
+	shell_print(ctx_shell, "Broadcast reception stop completed");
+}
 #endif
 
 static struct bt_cap_commander_cb cbs = {
@@ -122,6 +132,7 @@ static struct bt_cap_commander_cb cbs = {
 #endif /* CONFIG_BT_MICP_MIC_CTLR */
 #if defined(CONFIG_BT_BAP_BROADCAST_ASSISTANT)
 	.broadcast_reception_start = cap_broadcast_reception_start_cb,
+	.broadcast_reception_stop = cap_broadcast_reception_stop_cb,
 #endif /* CONFIG_BT_BAP_BROADCAST_ASSISTANT */
 };
 
@@ -662,6 +673,87 @@ static int cmd_cap_commander_broadcast_reception_start(const struct shell *sh, s
 
 	return 0;
 }
+
+static int cmd_cap_commander_broadcast_reception_stop(const struct shell *sh, size_t argc,
+						      char *argv[])
+{
+	struct bt_cap_commander_broadcast_reception_stop_member_param
+		member_params[CONFIG_BT_MAX_CONN] = {0};
+	struct bt_cap_commander_broadcast_reception_stop_param param = {
+		.type = BT_CAP_SET_TYPE_AD_HOC,
+		.param = member_params,
+	};
+	struct bt_cap_commander_broadcast_reception_stop_member_param *member_param =
+		&member_params[0];
+
+	struct bt_conn *connected_conns[CONFIG_BT_MAX_CONN] = {0};
+	size_t conn_cnt = 0U;
+	unsigned long src_id;
+
+	int err = 0;
+
+	if (default_conn == NULL) {
+		shell_error(sh, "Not connected");
+		return -ENOEXEC;
+	}
+
+	/* TODO: Add support for coordinated sets */
+
+	/* Populate the array of connected connections */
+	bt_conn_foreach(BT_CONN_TYPE_LE, populate_connected_conns, (void *)connected_conns);
+	for (size_t i = 0; i < ARRAY_SIZE(connected_conns); i++) {
+		struct bt_conn *conn = connected_conns[i];
+
+		if (conn == NULL) {
+			break;
+		}
+
+		conn_cnt++;
+	}
+
+	src_id = shell_strtoul(argv[2], 0, &err);
+	if (err != 0) {
+		shell_error(sh, "Could not parse src_id: %d", err);
+
+		return -ENOEXEC;
+	}
+
+	if (src_id > UINT8_MAX) {
+		shell_error(sh, "Invalid src_id: %lu", src_id);
+
+		return -ENOEXEC;
+	}
+
+	member_param->src_id = src_id;
+	/* TODO: Allow for multiple subgroups */
+	member_param->num_subgroups = 1;
+	member_param->member.member = connected_conns[0];
+
+	/* each connection has its own member_params field
+	 * here we use the same values for all connections, so we copy
+	 * the parameters
+	 */
+	for (size_t i = 1U; i < conn_cnt; i++) {
+		memcpy(&member_params[i], member_param, sizeof(*member_param));
+
+		/* the member value is different for each, so we can not just copy this value */
+		member_params[i].member.member = connected_conns[i];
+	}
+
+	param.count = conn_cnt;
+
+	shell_print(sh, "Stopping broadcast reception on %zu connection(s)", param.count);
+
+	err = bt_cap_commander_broadcast_reception_stop(&param);
+	if (err != 0) {
+		shell_print(sh, "Failed to initiate broadcast reception stop: %d", err);
+
+		return -ENOEXEC;
+	}
+
+	return 0;
+}
+
 #endif /* CONFIG_BT_BAP_BROADCAST_ASSISTANT */
 
 static int cmd_cap_commander(const struct shell *sh, size_t argc, char **argv)
@@ -710,6 +802,11 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 		      "<broadcast_id> [<pa_interval>] [<sync_bis>] "
 		      "[<metadata>]",
 		      cmd_cap_commander_broadcast_reception_start, 5, 3),
+	SHELL_CMD_ARG(broadcast_reception_stop, NULL,
+		      "Stop broadcast reception "
+		      "from <src_id>",
+		      cmd_cap_commander_broadcast_reception_stop, 2, 0),
+
 #endif /* CONFIG_BT_BAP_BROADCAST_ASSISTANT */
 	SHELL_SUBCMD_SET_END);
 

@@ -437,8 +437,8 @@ and index 1 gets the second offset, etc.:
    Gain set for inst 0x20014188
    Microphone gain change completed
 
-Starting a broadcast reception
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Starting and stopping broadcast reception
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: console
 
@@ -451,3 +451,9 @@ Starting a broadcast reception
    BASS discover done with 1 recv states
    uart:~$ cap_commander broadcast_reception_start <device B> 0 4
    Starting broadcast reception on 1 connection(s)
+   Broadcast reception start completed
+   uart:~$ cap_commander broadcast_reception_stop <src_id>
+   Stopping broadcast reception on 1 connection(s)
+   Broadcast reception stop completed
+
+
