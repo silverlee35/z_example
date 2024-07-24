@@ -401,9 +401,15 @@ static int bis_sync_req_cb(struct bt_conn *conn,
 			   const struct bt_bap_scan_delegator_recv_state *recv_state,
 			   const uint32_t bis_sync_req[CONFIG_BT_BAP_BASS_MAX_SUBGROUPS])
 {
-	/* We only care about a single subgroup in this test */
+	uint32_t total_bis = 0U;
+
 	broadcaster_broadcast_id = recv_state->broadcast_id;
-	if (bis_sync_req[0] != 0) {
+
+	for (int i = 0; i < recv_state->num_subgroups; i++) {
+		total_bis |= bis_sync_req[i];
+		printk("BIS Sync %d: %d\n", i, bis_sync_req[i]);
+	}
+	if (total_bis != 0U) {
 		SET_FLAG(flag_bis_sync_requested);
 	} else {
 		UNSET_FLAG(flag_bis_sync_requested);
@@ -1032,13 +1038,16 @@ static void test_cap_acceptor_broadcast_reception(void)
 
 	sink_wait_for_data();
 
-	/* Since we are re-using the BAP broadcast source test
-	 * we get a metadata udate, and we need to send an extra
+	/* Since we are re-usingthe BAP broadcast source test
+	 * we get a metadata update, and we need to send an extra
 	 * backchannel sync
 	 */
 	base_wait_for_metadata_update();
 
 	backchannel_sync_send_all(); /* let broadcaster know we can stop the source */
+
+	/* unsetting the flag means that the bis_sync for all subgroups were set to 0 */
+	WAIT_FOR_UNSET_FLAG(flag_bis_sync_requested);
 
 	wait_for_streams_stop(stream_count);
 
