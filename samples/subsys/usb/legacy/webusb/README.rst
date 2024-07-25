@@ -1,5 +1,5 @@
-.. zephyr:code-sample:: webusb
-   :name: WebUSB
+.. zephyr:code-sample:: legacy-webusb
+   :name: Legacy WebUSB
    :relevant-api: _usb_device_core_api
 
    Receive and echo data from a web page using WebUSB API.
