@@ -156,10 +156,61 @@ static struct bt_hid_device *default_hid;
 static int hid_inited;
 static struct bt_sdp_record hid_rec = BT_SDP_RECORD(hid_attrs);
 
+static void hid_connect_cb(struct bt_hid_device *hid)
+{
+	shell_print(ctx_shell, "hid:%p connected", hid);
+
+	default_hid = hid;
+}
+
+static void hid_disconnected_cb(struct bt_hid_device *hid)
+{
+	shell_print(ctx_shell, "hid:%p disconnected", hid);
+
+	default_hid = NULL;
+}
+
+static void hid_event_handler_cb(struct bt_hid_device *hid, bt_hid_event_t event, uint8_t *data,
+				 uint16_t len)
+{
+	shell_print(ctx_shell, "hid:%p handle event:%d, ", hid, event);
+
+	switch (event) {
+	case BT_HID_EVENT_GET_REPORT: {
+		uint8_t buf[6] = {0};
+
+		buf[0] = 0x01;
+		buf[1] = 0x01;
+		bt_hid_device_send_ctrl_data(hid, BT_HID_REPORT_TYPE_INPUT, buf, 2);
+	}
+	case BT_HID_EVENT_GET_PROTOCOL: {
+		uint8_t mode = BT_HID_PROTOCOL_REPORT_MODE;
+
+		bt_hid_device_send_ctrl_data(hid, BT_HID_REPORT_TYPE_OTHER, &mode, 1);
+		break;
+	}
+	case BT_HID_EVENT_SET_PROTOCOL: {
+		bt_hid_device_send_response(hid, BT_HID_HANDSHAKE_RSP_SUCCESS);
+		break;
+	}
+	case BT_HID_EVENT_SET_REPORT: {
+		bt_hid_device_send_response(hid, BT_HID_HANDSHAKE_RSP_ERR_INVALID_REP_ID);
+		break;
+	}
+	case BT_HID_EVENT_UNPLUG: {
+		break;
+	}
+	default: {
+		bt_hid_device_send_response(hid, BT_HID_HANDSHAKE_RSP_ERR_INVALID_PARAM);
+		break;
+	}
+	}
+}
+
 static struct bt_hid_device_cb hid_cb = {
-	.connected = NULL,
-	.disconnected = NULL,
-	.event_cb = NULL,
+	.connected = hid_connect_cb,
+	.disconnected = hid_disconnected_cb,
+	.event_cb = hid_event_handler_cb,
 };
 
 static int cmd_hid_register(const struct shell *sh, int32_t argc, char *argv[])
@@ -183,9 +234,72 @@ static int cmd_hid_register(const struct shell *sh, int32_t argc, char *argv[])
 	return ret;
 }
 
+static int cmd_hid_connect(const struct shell *sh, size_t argc, char *argv[])
+{
+	if (!hid_inited) {
+		shell_print(sh, "hid connection callbacks not registered");
+		return -ENOEXEC;
+	}
+
+	if (!default_conn) {
+		shell_error(sh, "bt not connected");
+		return -ENOEXEC;
+	}
+
+	default_hid = bt_hid_device_connect(default_conn);
+	if (!default_hid) {
+		shell_error(sh, "fail to connect hid device");
+	}
+
+	return 0;
+}
+
+static int cmd_hid_disconnect(const struct shell *sh, size_t argc, char *argv[])
+{
+	if (!hid_inited) {
+		shell_print(sh, "hid connection callbacks not registered");
+		return -ENOEXEC;
+	}
+
+	if (!default_hid) {
+		shell_error(sh, "hid device is not connected");
+	}
+
+	bt_hid_devie_disconnect(default_hid);
+	default_hid = NULL;
+
+	return 0;
+}
+
+static int cmd_hid_send_report(const struct shell *sh, size_t argc, char *argv[])
+{
+	uint8_t buf[5] = {0};
+
+	if (!hid_inited) {
+		shell_print(sh, "hid connection callbacks not registered");
+		return -ENOEXEC;
+	}
+
+	if (!default_hid) {
+		shell_error(sh, "hid device is not connected");
+		return -ENOEXEC;
+	}
+
+	buf[0] = 0x02; /* Mouse */
+	buf[1] = 0x00;
+	buf[2] = atoi(argv[1]); /* X Displacement */
+	buf[3] = atoi(argv[2]); /* Y Displacement */
+	bt_hid_device_send_intr_data(default_hid, BT_HID_REPORT_TYPE_INPUT, buf, sizeof(buf));
+
+	return 0;
+}
+
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	hid_device_cmds,
 	SHELL_CMD_ARG(register, NULL, "register hid device", cmd_hid_register, 1, 0),
+	SHELL_CMD_ARG(connect, NULL, "hid connect", cmd_hid_connect, 1, 0),
+	SHELL_CMD_ARG(disconnect, NULL, "hid disconnect", cmd_hid_disconnect, 1, 0),
+	SHELL_CMD_ARG(send, NULL, "send report mouse: [X] [Y]", cmd_hid_send_report, 3, 0),
 	SHELL_SUBCMD_SET_END);
 
 static int cmd_hid_device(const struct shell *sh, size_t argc, char **argv)
