@@ -31,6 +31,9 @@ enum {
 	BT_RFCOMM_CHAN_HSP_AG,
 	BT_RFCOMM_CHAN_HSP_HS,
 	BT_RFCOMM_CHAN_SPP,
+
+	BT_RFCOMM_CHAN_REG_START,
+	BT_RFCOMM_CHAN_REG_END = 30,
 };
 
 struct bt_rfcomm_dlc;
@@ -185,6 +188,19 @@ int bt_rfcomm_dlc_disconnect(struct bt_rfcomm_dlc *dlc);
  *  @return New buffer.
  */
 struct net_buf *bt_rfcomm_create_pdu(struct net_buf_pool *pool);
+
+/** @brief Allocate the rfcomm channal.
+ *
+ *  @return Rfcomm channal id.
+ */
+uint8_t bt_rfcomm_alloc_channel(void);
+
+/** @brief Free the rfcomm channal.
+ *
+ *  @param channel channal id.
+ *
+ */
+void bt_rfcomm_free_channel(uint8_t channel);
 
 #ifdef __cplusplus
 }
