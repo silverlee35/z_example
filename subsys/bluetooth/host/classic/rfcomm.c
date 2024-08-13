@@ -59,6 +59,7 @@ NET_BUF_POOL_DEFINE(dummy_pool, CONFIG_BT_MAX_CONN, 0, 0, NULL);
 					 struct bt_rfcomm_session, br_chan.chan)
 
 static struct bt_rfcomm_session bt_rfcomm_pool[CONFIG_BT_MAX_CONN];
+static uint32_t bt_rfcomm_channel_map;
 
 /* reversed, 8-bit, poly=0x07 */
 static const uint8_t rfcomm_crc_table[256] = {
@@ -1786,4 +1787,29 @@ void bt_rfcomm_init(void)
 	};
 
 	bt_l2cap_br_server_register(&server);
+}
+
+uint8_t bt_rfcomm_alloc_channel(void)
+{
+	uint8_t channel = BT_RFCOMM_CHAN_REG_START;
+	uint8_t number = BT_RFCOMM_CHAN_REG_END - BT_RFCOMM_CHAN_REG_START;
+	int i;
+
+	for (i = 0; i < number; i++) {
+		if ((bt_rfcomm_channel_map & (0x1 << i)) == 0) {
+			bt_rfcomm_channel_map |= (0x1 << i);
+			return (channel + i);
+		}
+	}
+
+	return 0;
+}
+
+void bt_rfcomm_free_channel(uint8_t channel)
+{
+	if ((channel < BT_RFCOMM_CHAN_REG_START) || (channel >= BT_RFCOMM_CHAN_REG_END)) {
+		return;
+	}
+
+	bt_rfcomm_channel_map &= (~(0x1 << (channel - BT_RFCOMM_CHAN_REG_START)));
 }
