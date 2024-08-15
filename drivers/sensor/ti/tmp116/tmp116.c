@@ -242,6 +242,33 @@ static int tmp116_channel_get(const struct device *dev,
 	return 0;
 }
 
+static int16_t tmp116_conv_value(const struct sensor_value *val)
+{
+	uint32_t freq_micro = sensor_value_to_micro(val);
+
+	switch (freq_micro) {
+	case 64000000: /* 1 / 15.5 ms has been rounded down */
+		return TMP116_CONV_15_5_MS;
+	case 8000000:
+		return TMP116_CONV_125_MS;
+	case 4000000:
+		return TMP116_CONV_250_MS;
+	case 2000000:
+		return TMP116_CONV_500_MS;
+	case 1000000:
+		return TMP116_CONV_1000_MS;
+	case 250000:
+		return TMP116_CONV_4000_MS;
+	case 125000:
+		return TMP116_CONV_8000_MS;
+	case 62500:
+		return TMP116_CONV_16000_MS;
+	default:
+		LOG_ERR("%" PRIu32 " uHz not supported", freq_micro);
+		return -EINVAL;
+	}
+}
+
 static int tmp116_attr_set(const struct device *dev,
 			   enum sensor_channel chan,
 			   enum sensor_attribute attr,
@@ -256,6 +283,14 @@ static int tmp116_attr_set(const struct device *dev,
 	}
 
 	switch ((int)attr) {
+	case SENSOR_ATTR_SAMPLING_FREQUENCY:
+		value = tmp116_conv_value(val);
+		if (value < 0) {
+			return value;
+		}
+
+		return tmp116_write_config(dev, TMP116_CFGR_CONV, value);
+
 	case SENSOR_ATTR_OFFSET:
 		if (drv_data->id != TMP117_DEVICE_ID) {
 			LOG_ERR("%s: Offset is only supported by TMP117",
