@@ -30,6 +30,9 @@ Removed APIs in this release
 Deprecated in this release
 ==========================
 
+* Deprecated the :c:func:`net_buf_put` and :c:func:`net_buf_get` API functions in favor of
+  :c:func:`k_fifo_put` and :c:func:`k_fifo_get`.
+
 Architectures
 *************
 
@@ -53,6 +56,9 @@ Bluetooth
 
 * Host
 
+  * Added API :c:func:`bt_gatt_get_uatt_mtu` to get current Unenhanced ATT MTU of a given
+    connection (experimental).
+
 * HCI Drivers
 
 Boards & SoC Support
@@ -65,6 +71,9 @@ Boards & SoC Support
 * Added support for these boards:
 
 * Made these board changes:
+
+  * :ref:`native_posix<native_posix>` has been deprecated in favour of
+    :ref:`native_sim<native_sim>`.
 
 * Added support for the following shields:
 
