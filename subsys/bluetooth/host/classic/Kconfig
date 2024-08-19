@@ -178,6 +178,13 @@ config BT_A2DP_SINK
 
 endif # BT_A2DP
 
+config BT_HID_DEVICE
+	bool "Bluetooth HID Device Profile [EXPERIMENTAL]"
+	select EXPERIMENTAL
+	default n
+	help
+	  This option enables the HID Device profile
+
 config BT_PAGE_TIMEOUT
 	hex "Bluetooth Page Timeout"
 	default 0x2000
@@ -193,6 +200,24 @@ config BT_COD
 	  This option sets the class of device.For the list of possible values please
 	  consult the following link:
 	  https://www.bluetooth.com/specifications/assigned-numbers
+
+config BT_DEVICE_VEDNOR_ID
+	hex "Bluetooth Device Vendor ID"
+	default 0x0000
+	help
+	  This option sets the device vendor id
+
+config BT_DEVICE_PRODUCT_ID
+	hex "Bluetooth Device  Product ID"
+	default 0xb009
+	help
+	  This option sets the device product id
+
+config BT_DEVICE_PROTOCOL_ID
+	hex "Bluetooth Device Protocol ID"
+	default 0x0002
+	help
+	  This option sets the device protocol id
 
 endif # BT_CLASSIC
 
