@@ -26,8 +26,20 @@ LOG_MODULE_REGISTER(TMP114, CONFIG_SENSOR_LOG_LEVEL);
 
 #define TMP114_DEVICE_ID	0x1114
 
-#define TMP114_ALERT_DATA_READY  BIT(0)
-#define TMP114_AVG_MASK          BIT(7)
+#define TMP114_ALERT_DATA_READY	BIT(0)
+
+#define TMP114_CFGR_AVG		BIT(7)
+#define TMP114_AVG		BIT(7)
+
+#define TMP114_CFGR_CONV	(BIT(0) | BIT(1) | BIT(2))
+#define TMP114_CONV_156000	0
+#define TMP114_CONV_32000	1
+#define TMP114_CONV_16000	2
+#define TMP114_CONV_8000	3
+#define TMP114_CONV_4000	4
+#define TMP114_CONV_2000	5
+#define TMP114_CONV_1000	6
+#define TMP114_CONV_500		7
 
 struct tmp114_data {
 	uint16_t sample;
@@ -57,6 +69,29 @@ static int tmp114_reg_write(const struct device *dev, uint8_t reg, uint16_t val)
 	uint8_t tx_buf[3] = {reg, val >> 8, val & 0xFF};
 
 	return i2c_write_dt(&cfg->bus, tx_buf, sizeof(tx_buf));
+}
+
+static int tmp114_write_config(const struct device *dev, uint16_t mask, uint16_t conf)
+{
+	uint16_t config = 0;
+	int result;
+
+	result = tmp114_reg_read(dev, TMP114_REG_CFGR, &config);
+
+	if (result < 0) {
+		return result;
+	}
+
+	config &= ~mask;
+	config |= conf;
+
+	result = tmp114_reg_write(dev, TMP114_REG_CFGR, config);
+
+	if (result < 0) {
+		return result;
+	}
+
+	return 0;
 }
 
 static inline int tmp114_device_id_check(const struct device *dev, uint16_t *id)
@@ -161,11 +196,47 @@ static int tmp114_attr_get(const struct device *dev, enum sensor_channel chan,
 	return 0;
 }
 
+static int16_t tmp114_frequency_value(const struct sensor_value *frequency)
+{
+	const uint32_t freq_micro = sensor_value_to_micro(frequency);
+	int conv = 0;
+
+	switch (freq_micro) {
+	case 156000000:
+		conv = TMP114_CONV_156000; /* 6.2 ms */
+		break;
+	case 32000000:
+		conv = TMP114_CONV_32000; /* 31.25 ms */
+		break;
+	case 16000000:
+		conv = TMP114_CONV_16000; /* 62.5 ms */
+		break;
+	case 8000000:
+		conv = TMP114_CONV_8000; /* 125 ms */
+		break;
+	case 4000000:
+		conv = TMP114_CONV_4000; /* 250 ms */
+		break;
+	case 2000000:
+		conv = TMP114_CONV_2000; /* 500 ms */
+		break;
+	case 1000000:
+		conv = TMP114_CONV_1000; /* 1 s */
+		break;
+	case 500000:
+		conv = TMP114_CONV_500; /* 2 s */
+		break;
+	default:
+		return -EINVAL;
+	}
+	return conv;
+}
+
 static int tmp114_attr_set(const struct device *dev, enum sensor_channel chan,
 			   enum sensor_attribute attr, const struct sensor_value *val)
 {
-	int16_t value;
-	int rc;
+	int16_t avg = 0;
+	uint16_t conv = 0;
 
 	if (chan != SENSOR_CHAN_AMBIENT_TEMP) {
 		return -ENOTSUP;
@@ -176,16 +247,25 @@ static int tmp114_attr_set(const struct device *dev, enum sensor_channel chan,
 		/* Enable the AVG in tmp114. The chip will do 8 avg of 8 samples
 		 * to get a more accurate value.
 		 */
-		rc = tmp114_reg_read(dev, TMP114_REG_CFGR, &value);
-		if (rc < 0) {
-			return rc;
-		}
-		value = value & ~TMP114_AVG_MASK;
+
 		if (val->val1) {
-			value |= TMP114_AVG_MASK;
+			avg = TMP114_AVG;
 		}
 
-		return tmp114_reg_write(dev, TMP114_REG_CFGR, value);
+		return tmp114_write_config(dev, TMP114_CFGR_AVG, avg);
+
+	case SENSOR_ATTR_SAMPLING_FREQUENCY:
+		/* Set the sampling frequency in tmp114.
+		 * val is the requested frequency in Hz
+		 * Valid fequencies are 156, 32, 16, 8, 4, 2, 1, 0.5 Hz
+		 */
+
+		conv = tmp114_frequency_value(val);
+		if (conv < 0) {
+			return conv;
+		}
+		return tmp114_write_config(dev, TMP114_CFGR_CONV, conv);
+
 	default:
 		return -ENOTSUP;
 	}
