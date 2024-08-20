@@ -382,6 +382,7 @@ static int tmp116_init(const struct device *dev)
 	const struct tmp116_dev_config *cfg = dev->config;
 	int rc;
 	uint16_t id;
+	struct sensor_value val;
 
 	if (!device_is_ready(cfg->bus.bus)) {
 		LOG_ERR("I2C dev %s not ready", cfg->bus.bus->name);
@@ -396,13 +397,20 @@ static int tmp116_init(const struct device *dev)
 	LOG_DBG("Got device ID: %x", id);
 	drv_data->id = id;
 
-	return 0;
+	rc = sensor_value_from_micro(&val, cfg->sample_frequency);
+	if (rc < 0) {
+		return rc;
+	}
+	rc = tmp116_attr_set(dev, SENSOR_CHAN_AMBIENT_TEMP, SENSOR_ATTR_SAMPLING_FREQUENCY, &val);
+
+	return rc;
 }
 
 #define DEFINE_TMP116(_num) \
 	static struct tmp116_data tmp116_data_##_num; \
 	static const struct tmp116_dev_config tmp116_config_##_num = { \
-		.bus = I2C_DT_SPEC_INST_GET(_num) \
+		.bus = I2C_DT_SPEC_INST_GET(_num), \
+		.sample_frequency = DT_INST_PROP(_num, sample_frequency), \
 	}; \
 	SENSOR_DEVICE_DT_INST_DEFINE(_num, tmp116_init, NULL, \
 		&tmp116_data_##_num, &tmp116_config_##_num, POST_KERNEL, \

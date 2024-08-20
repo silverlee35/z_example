@@ -58,6 +58,7 @@ struct tmp116_data {
 
 struct tmp116_dev_config {
 	struct i2c_dt_spec bus;
+	uint32_t sample_frequency;
 };
 
 #endif /*  ZEPHYR_DRIVERS_SENSOR_TMP116_TMP116_H_ */
