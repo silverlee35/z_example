@@ -44,13 +44,60 @@ GTEXT(pm_s2ram_mark_set)
 GTEXT(pm_s2ram_mark_check_and_clear)
 GDATA(_cpu_context)
 
+# Pushes registers r4~r12 and lr on the stack.
+# r0 is unmodified, other GPRs may be overwritten.
+.macro push_gprs
+	push	{r4-r12, lr}
+.endm
+
+# Pops registers r4~r12 and lr from the stack
+# r0 is unmodified, other GPRs may be overwritten.
+.macro pop_gprs
+	pop	{r4-r12, lr}
+.endm
+
+# Saves all special registers in the provided __cpu_context structure.
+.macro save_special_registers cpu_ctx, tmp_reg
+	SAVE_SPECIAL_REG(msp,		\cpu_ctx, \tmp_reg)
+	SAVE_SPECIAL_REG(msplim,	\cpu_ctx, \tmp_reg)
+	SAVE_SPECIAL_REG(psp,		\cpu_ctx, \tmp_reg)
+	SAVE_SPECIAL_REG(psplim,	\cpu_ctx, \tmp_reg)
+	SAVE_SPECIAL_REG(apsr,		\cpu_ctx, \tmp_reg)
+	SAVE_SPECIAL_REG(ipsr,		\cpu_ctx, \tmp_reg)
+	SAVE_SPECIAL_REG(epsr,		\cpu_ctx, \tmp_reg)
+	SAVE_SPECIAL_REG(primask,	\cpu_ctx, \tmp_reg)
+	SAVE_SPECIAL_REG(faultmask,	\cpu_ctx, \tmp_reg)
+	SAVE_SPECIAL_REG(basepri,	\cpu_ctx, \tmp_reg)
+	SAVE_SPECIAL_REG(control,	\cpu_ctx, \tmp_reg)
+.endm
+
+# Restores all special registers from the provided __cpu_context structure.
+.macro restore_special_registers cpu_ctx, tmp_reg
+	RESTORE_SPECIAL_REG(msp,	\cpu_ctx, \tmp_reg)
+	RESTORE_SPECIAL_REG(msplim,	\cpu_ctx, \tmp_reg)
+	RESTORE_SPECIAL_REG(psp,	\cpu_ctx, \tmp_reg)
+	RESTORE_SPECIAL_REG(psplim,	\cpu_ctx, \tmp_reg)
+
+	# APSR has different name between MRS and MSR
+	ldr	\tmp_reg, [\cpu_ctx, # CPU_CTX_SR_OFFSET(apsr)]
+	msr	apsr_nzcvq, \tmp_reg
+
+	RESTORE_SPECIAL_REG(ipsr,	\cpu_ctx, \tmp_reg)
+	RESTORE_SPECIAL_REG(epsr,	\cpu_ctx, \tmp_reg)
+	RESTORE_SPECIAL_REG(primask,	\cpu_ctx, \tmp_reg)
+	RESTORE_SPECIAL_REG(faultmask,	\cpu_ctx, \tmp_reg)
+	RESTORE_SPECIAL_REG(basepri,	\cpu_ctx, \tmp_reg)
+	RESTORE_SPECIAL_REG(control,	\cpu_ctx, \tmp_reg)
+	isb
+.endm
+
 SECTION_FUNC(TEXT, arch_pm_s2ram_suspend)
 	/*
 	 * Save the CPU context
 	 *
 	 * r0: address of the system_off function
 	 */
-	push	{r4-r12, lr}
+	push_gprs
 
 	/* Move system_off to protected register. */
 	mov 	r4, r0
@@ -58,27 +105,7 @@ SECTION_FUNC(TEXT, arch_pm_s2ram_suspend)
 	/* Store CPU context */
 	ldr	r1, =_cpu_context
 
-	SAVE_SPECIAL_REG(msp, r1, r2)
-
-	SAVE_SPECIAL_REG(msplim, r1, r2)
-
-	SAVE_SPECIAL_REG(psp, r1, r2)
-
-	SAVE_SPECIAL_REG(psplim, r1, r2)
-
-	SAVE_SPECIAL_REG(apsr, r1, r2)
-
-	SAVE_SPECIAL_REG(ipsr, r1, r2)
-
-	SAVE_SPECIAL_REG(epsr, r1, r2)
-
-	SAVE_SPECIAL_REG(primask, r1, r2)
-
-	SAVE_SPECIAL_REG(faultmask, r1, r2)
-
-	SAVE_SPECIAL_REG(basepri, r1, r2)
-
-	SAVE_SPECIAL_REG(control, r1, r2)
+	save_special_registers r1, r2
 
 	/*
 	 * Mark entering suspend to RAM.
@@ -104,7 +131,7 @@ SECTION_FUNC(TEXT, arch_pm_s2ram_suspend)
 	/* Move system_off back to r0 as return value */
 	mov	r0, r4
 
-	pop	{r4-r12, lr}
+	pop_gprs
 	bx	lr
 
 
@@ -129,32 +156,9 @@ resume:
 	 */
 	ldr	r0, =_cpu_context
 
-	RESTORE_SPECIAL_REG(msp, r0, r1)
+	restore_special_registers r0, r1
 
-	RESTORE_SPECIAL_REG(msplim, r0, r1)
-
-	RESTORE_SPECIAL_REG(psp, r0, r1)
-
-	RESTORE_SPECIAL_REG(psplim, r0, r1)
-
-	# APSR has different name between MRS and MSR
-	ldr	r1, [r0, # CPU_CTX_SR_OFFSET(apsr)]
-	msr	apsr_nzcvq, r1
-
-	RESTORE_SPECIAL_REG(ipsr, r0, r1)
-
-	RESTORE_SPECIAL_REG(epsr, r0, r1)
-
-	RESTORE_SPECIAL_REG(primask, r0, r1)
-
-	RESTORE_SPECIAL_REG(faultmask, r0, r1)
-
-	RESTORE_SPECIAL_REG(basepri, r0, r1)
-
-	RESTORE_SPECIAL_REG(control, r0, r1)
-	isb
-
-	pop	{r4-r12, lr}
+	pop_gprs
 
 	/*
 	 * Set the return value and return
