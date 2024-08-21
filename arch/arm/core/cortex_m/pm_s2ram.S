@@ -47,36 +47,82 @@ GDATA(_cpu_context)
 # Pushes registers r4~r12 and lr on the stack.
 # r0 is unmodified, other GPRs may be overwritten.
 .macro push_gprs
+#ifndef CONFIG_ARMV7_M_ARMV8_M_MAINLINE
+	/* `push` on ARMv6-M / ARMv8-M Baseline:
+	 * only r0~r7 and lr may be pushed
+	 */
+	push	{ r4-r7 }
+	mov	r1, r8
+	mov	r2, r9
+	mov	r3, r10
+	mov	r4, r11
+	mov	r5, r12
+	push	{ r1-r5, lr }
+#else
+	/* `push` on ARMv7-M and ARMv8-M Mainline: no limitation */
 	push	{r4-r12, lr}
+#endif /* !CONFIG_ARMV7_M_ARMV8_M_MAINLINE */
 .endm
 
 # Pops registers r4~r12 and lr from the stack
 # r0 is unmodified, other GPRs may be overwritten.
 .macro pop_gprs
+#ifndef CONFIG_ARMV7_M_ARMV8_M_MAINLINE
+	/* `pop` on ARMv6-M / ARMv8-M Baseline:
+	 * can only pop to r0~r7 and pc (not lr!)
+	 */
+	pop	{ r1-r6 } /* pop lr through r6 */
+	mov 	lr, r6
+	mov 	r12, r5
+	mov 	r11, r4
+	mov 	r10, r3
+	mov 	r9, r2
+	mov 	r8, r1
+	pop	{ r4-r7 }
+#else
+	/* `pop` on ARMv7-M and ARMv8-M Mainline: no limitation */
 	pop	{r4-r12, lr}
+#endif /* !CONFIG_ARMV7_M_ARMV8_M_MAINLINE */
 .endm
 
 # Saves all special registers in the provided __cpu_context structure.
 .macro save_special_registers cpu_ctx, tmp_reg
 	SAVE_SPECIAL_REG(msp,		\cpu_ctx, \tmp_reg)
-	SAVE_SPECIAL_REG(msplim,	\cpu_ctx, \tmp_reg)
 	SAVE_SPECIAL_REG(psp,		\cpu_ctx, \tmp_reg)
-	SAVE_SPECIAL_REG(psplim,	\cpu_ctx, \tmp_reg)
 	SAVE_SPECIAL_REG(apsr,		\cpu_ctx, \tmp_reg)
 	SAVE_SPECIAL_REG(ipsr,		\cpu_ctx, \tmp_reg)
 	SAVE_SPECIAL_REG(epsr,		\cpu_ctx, \tmp_reg)
 	SAVE_SPECIAL_REG(primask,	\cpu_ctx, \tmp_reg)
+	SAVE_SPECIAL_REG(control,	\cpu_ctx, \tmp_reg)
+#ifdef CONFIG_ARMV7_M_ARMV8_M_MAINLINE
+	/* Registers present on ARMv7-M and ARMv8-M Mainline */
 	SAVE_SPECIAL_REG(faultmask,	\cpu_ctx, \tmp_reg)
 	SAVE_SPECIAL_REG(basepri,	\cpu_ctx, \tmp_reg)
-	SAVE_SPECIAL_REG(control,	\cpu_ctx, \tmp_reg)
+#endif /* CONFIG_ARMV7_M_ARMV8_M_MAINLINE */
+
+#if defined(CONFIG_ARMV8_M_BASELINE) || defined(CONFIG_ARMV8_M_MAINLINE)
+	/* Registers present only on ARMv8-M (Baseline / Mainline) */
+	SAVE_SPECIAL_REG(msplim,	\cpu_ctx, \tmp_reg)
+	SAVE_SPECIAL_REG(psplim,	\cpu_ctx, \tmp_reg)
+#endif /* CONFIG_ARMV8_M_BASELINE || CONFIG_ARMV8_M_MAINLINE */
 .endm
 
 # Restores all special registers from the provided __cpu_context structure.
 .macro restore_special_registers cpu_ctx, tmp_reg
-	RESTORE_SPECIAL_REG(msp,	\cpu_ctx, \tmp_reg)
+#ifdef CONFIG_ARMV7_M_ARMV8_M_MAINLINE
+	/* Registers present on ARMv7-M and ARMv8-M Mainline */
+	RESTORE_SPECIAL_REG(faultmask,	\cpu_ctx, \tmp_reg)
+	RESTORE_SPECIAL_REG(basepri,	\cpu_ctx, \tmp_reg)
+#endif /* CONFIG_ARMV7_M_ARMV8_M_MAINLINE */
+
+#if defined(CONFIG_ARMV8_M_BASELINE) || defined(CONFIG_ARMV8_M_MAINLINE)
+	/* Registers present only on ARMv8-M (Baseline / Mainline) */
 	RESTORE_SPECIAL_REG(msplim,	\cpu_ctx, \tmp_reg)
-	RESTORE_SPECIAL_REG(psp,	\cpu_ctx, \tmp_reg)
 	RESTORE_SPECIAL_REG(psplim,	\cpu_ctx, \tmp_reg)
+#endif /* CONFIG_ARMV8_M_BASELINE || CONFIG_ARMV8_M_MAINLINE */
+
+	RESTORE_SPECIAL_REG(msp,	\cpu_ctx, \tmp_reg)
+	RESTORE_SPECIAL_REG(psp,	\cpu_ctx, \tmp_reg)
 
 	# APSR has different name between MRS and MSR
 	ldr	\tmp_reg, [\cpu_ctx, # CPU_CTX_SR_OFFSET(apsr)]
@@ -85,8 +131,6 @@ GDATA(_cpu_context)
 	RESTORE_SPECIAL_REG(ipsr,	\cpu_ctx, \tmp_reg)
 	RESTORE_SPECIAL_REG(epsr,	\cpu_ctx, \tmp_reg)
 	RESTORE_SPECIAL_REG(primask,	\cpu_ctx, \tmp_reg)
-	RESTORE_SPECIAL_REG(faultmask,	\cpu_ctx, \tmp_reg)
-	RESTORE_SPECIAL_REG(basepri,	\cpu_ctx, \tmp_reg)
 	RESTORE_SPECIAL_REG(control,	\cpu_ctx, \tmp_reg)
 	isb
 .endm
@@ -146,11 +190,13 @@ SECTION_FUNC(TEXT, arch_pm_s2ram_resume)
 	push    {r0, lr}
 	bl      pm_s2ram_mark_check_and_clear
 	cmp	r0, #0x1
-	pop     {r0, lr}
 	beq	resume
-	bx	lr
+	pop	{r0, pc}
 
 resume:
+	/* Revert effect of prologue's `push { r0, lr }` */
+	add	sp, #8
+
 	/*
 	 * Restore the CPU context
 	 */
@@ -163,5 +209,5 @@ resume:
 	/*
 	 * Set the return value and return
 	 */
-	mov	r0, #0
+	movs	r0, #0
 	bx	lr
