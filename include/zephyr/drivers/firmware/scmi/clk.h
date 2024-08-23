@@ -15,8 +15,7 @@
 #include <zephyr/drivers/firmware/scmi/protocol.h>
 
 #define SCMI_CLK_CONFIG_DISABLE_ENABLE_MASK GENMASK(1, 0)
-#define SCMI_CLK_CONFIG_ENABLE_DISABLE(x)\
-	((uint32_t)(x) & SCMI_CLK_CONFIG_DISABLE_ENABLE_MASK)
+#define SCMI_CLK_CONFIG_ENABLE_DISABLE(x)   ((uint32_t)(x) & SCMI_CLK_CONFIG_DISABLE_ENABLE_MASK)
 
 #define SCMI_CLK_ATTRIBUTES_CLK_NUM(x) ((x) & GENMASK(15, 0))
 
@@ -65,8 +64,7 @@ enum scmi_clock_message {
  * @retval 0 if successful
  * @retval negative errno if failure
  */
-int scmi_clock_protocol_attributes(struct scmi_protocol *proto,
-				   uint32_t *attributes);
+int scmi_clock_protocol_attributes(struct scmi_protocol *proto, uint32_t *attributes);
 
 /**
  * @brief Send the CLOCK_CONFIG_SET command and get its reply
@@ -78,8 +76,7 @@ int scmi_clock_protocol_attributes(struct scmi_protocol *proto,
  * @retval 0 if successful
  * @retval negative errno if failure
  */
-int scmi_clock_config_set(struct scmi_protocol *proto,
-			  struct scmi_clock_config *cfg);
+int scmi_clock_config_set(struct scmi_protocol *proto, struct scmi_clock_config *cfg);
 /**
  * @brief Query the rate of a clock
  *
@@ -90,7 +87,6 @@ int scmi_clock_config_set(struct scmi_protocol *proto,
  * @retval 0 if successful
  * @retval negative errno if failure
  */
-int scmi_clock_rate_get(struct scmi_protocol *proto,
-			uint32_t clk_id, uint32_t *rate);
+int scmi_clock_rate_get(struct scmi_protocol *proto, uint32_t clk_id, uint32_t *rate);
 
 #endif /* _INCLUDE_ZEPHYR_DRIVERS_FIRMWARE_SCMI_CLK_H_ */
