@@ -20,8 +20,8 @@ extern "C" {
  * @param hal_cb User provided callbacks for Device Management
  */
 
-void lora_basics_modem_start_work_thread(
-	void (*event_callback)(void), struct smtc_modem_hal_cb *hal_cb);
+void lora_basics_modem_start_work_thread(void (*event_callback)(void),
+					 struct smtc_modem_hal_cb *hal_cb);
 
 #ifdef __cplusplus
 }
