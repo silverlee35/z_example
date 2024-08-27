@@ -56,8 +56,6 @@ struct __cpu_context {
 	uint32_t msp;
 	uint32_t psp;
 	uint32_t apsr;
-	uint32_t ipsr;
-	uint32_t epsr;
 	uint32_t primask;
 	uint32_t control;
 

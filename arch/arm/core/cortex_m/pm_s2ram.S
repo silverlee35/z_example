@@ -90,8 +90,6 @@ GDATA(_cpu_context)
 	SAVE_SPECIAL_REG(msp,		\cpu_ctx, \tmp_reg)
 	SAVE_SPECIAL_REG(psp,		\cpu_ctx, \tmp_reg)
 	SAVE_SPECIAL_REG(apsr,		\cpu_ctx, \tmp_reg)
-	SAVE_SPECIAL_REG(ipsr,		\cpu_ctx, \tmp_reg)
-	SAVE_SPECIAL_REG(epsr,		\cpu_ctx, \tmp_reg)
 	SAVE_SPECIAL_REG(primask,	\cpu_ctx, \tmp_reg)
 	SAVE_SPECIAL_REG(control,	\cpu_ctx, \tmp_reg)
 #ifdef CONFIG_ARMV7_M_ARMV8_M_MAINLINE
@@ -128,8 +126,6 @@ GDATA(_cpu_context)
 	ldr	\tmp_reg, [\cpu_ctx, # CPU_CTX_SR_OFFSET(apsr)]
 	msr	apsr_nzcvq, \tmp_reg
 
-	RESTORE_SPECIAL_REG(ipsr,	\cpu_ctx, \tmp_reg)
-	RESTORE_SPECIAL_REG(epsr,	\cpu_ctx, \tmp_reg)
 	RESTORE_SPECIAL_REG(primask,	\cpu_ctx, \tmp_reg)
 	RESTORE_SPECIAL_REG(control,	\cpu_ctx, \tmp_reg)
 	isb
