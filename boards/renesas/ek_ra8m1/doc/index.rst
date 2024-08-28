@@ -106,8 +106,20 @@ The below features are currently supported on Zephyr OS for EK-RA8M1 board:
 +-----------+------------+----------------------+
 | FLASH     | on-chip    | flash                |
 +-----------+------------+----------------------+
+| ETHERNET  | on-chip    | ethernet             |
++-----------+------------+----------------------+
 
 Other hardware features are currently not supported by the port.
+
+**Note:**
+
+ETHERNET B is default support. Remove jumper J61 to enable Ethernet B.
+
++--------+----------------+
+| Jumper | Configurations |
++ ------ + ---------------+
+| J61    | Open           |
++--------+----------------+
 
 Programming and Debugging
 *************************
