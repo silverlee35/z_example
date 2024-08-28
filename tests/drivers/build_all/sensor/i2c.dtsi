@@ -1090,3 +1090,8 @@ test_i2c_fxls8974: fxls8974@93 {
 	int1-gpios = <&test_gpio 0 0>;
 	int2-gpios = <&test_gpio 0 0>;
 };
+
+test_i2c_lsm9ds1_mag: lsm9ds1_mag@94 {
+	compatible = "st,lsm9ds1_mag";
+	reg = <0x94>;
+};
