@@ -241,6 +241,16 @@ def test_hierarchy():
 
     assert edt.get_node("/parent/child-1").children == {}
 
+def test_hashes():
+    '''Test Node.hash on hierarchy nodes'''
+    with from_here():
+        edt = edtlib.EDT("test.dts", ["test-bindings"])
+
+    assert edt.get_node("/").hash == "8a5edab282632443219e051e4ade2d1d5bbc671c781051bf1437897cbdfea0f1"
+    assert edt.get_node("/parent").hash == "dfc96d7bae6f9f623862d171a8cf76d59b9db16cf6b1619c0b10187f912c2844"
+    assert edt.get_node("/parent/child-1").hash == "b2fd4b9c895737807595116e64be161d6bbdc9fcd1521998fe4c16aa42abd4e8"
+    assert edt.get_node("/parent/child-2").hash == "6b2bd9733c213f2e60f9c9c61cac30588089eee0f480c387014d3a9cd20b3ac2"
+
 def test_child_index():
     '''Test Node.child_index.'''
     with from_here():
