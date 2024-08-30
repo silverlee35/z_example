@@ -317,7 +317,7 @@ int eth_adin2111_oa_data_read(const struct device *dev, const uint16_t port_idx)
 							   K_MSEC(CONFIG_ETH_ADIN2111_TIMEOUT));
 			if (!pkt) {
 				LOG_ERR("OA RX: cannot allcate packet space, skipping.");
-				return -EIO;
+				return -ENOMEM;
 			}
 			/* Skipping CRC32 */
 			ret = net_pkt_write(pkt, ctx->buf, ctx->scur - sizeof(uint32_t));
@@ -698,51 +698,39 @@ static void adin2111_offload_thread(void *p1, void *p2, void *p3)
 			adin2111_port_on_phyint(ctx->port[1]);
 		}
 
-		if (ctx->oa) {
+		/* handle rx interrupt(s) */
+		do {
+			/* handle port 1 rx */
 			if (status1 & ADIN2111_STATUS1_P1_RX_RDY) {
-				ret = eth_adin2111_oa_data_read(dev, 0);
+				if (ctx->oa) {
+					ret = eth_adin2111_oa_data_read(dev, 0);
+				} else {
+					ret = adin2111_read_fifo(dev, 0U);
+				}
+
 				if (ret < 0) {
 					break;
 				}
 			}
-			if (status1 & ADIN2111_STATUS1_P2_RX_RDY) {
-				ret = eth_adin2111_oa_data_read(dev, 1);
+
+			/* handle port 2 rx */
+			if ((status1 & ADIN2111_STATUS1_P2_RX_RDY) && is_adin2111) {
+				if (ctx->oa) {
+					ret = eth_adin2111_oa_data_read(dev, 1);
+				} else {
+					ret = adin2111_read_fifo(dev, 1U);
+				}
+
 				if (ret < 0) {
 					break;
 				}
 			}
-			goto continue_unlock;
-		}
 
-		/* handle port 1 rx */
-		if (status1 & ADIN2111_STATUS1_P1_RX_RDY) {
-			do {
-				ret = adin2111_read_fifo(dev, 0U);
-				if (ret < 0) {
-					break;
-				}
-
-				ret = eth_adin2111_reg_read(dev, ADIN2111_STATUS1, &status1);
-				if (ret < 0) {
-					goto continue_unlock;
-				}
-			} while (!!(status1 & ADIN2111_STATUS1_P1_RX_RDY));
-		}
-
-		/* handle port 2 rx */
-		if ((status1 & ADIN2111_STATUS1_P2_RX_RDY) && is_adin2111) {
-			do {
-				ret = adin2111_read_fifo(dev, 1U);
-				if (ret < 0) {
-					break;
-				}
-
-				ret = eth_adin2111_reg_read(dev, ADIN2111_STATUS1, &status1);
-				if (ret < 0) {
-					goto continue_unlock;
-				}
-			} while (!!(status1 & ADIN2111_STATUS1_P2_RX_RDY));
-		}
+			ret = eth_adin2111_reg_read(dev, ADIN2111_STATUS1, &status1);
+			if (ret < 0) {
+				goto continue_unlock;
+			}
+		} while (status1 & (ADIN2111_STATUS1_P1_RX_RDY | ADIN2111_STATUS1_P2_RX_RDY));
 
 continue_unlock:
 		/* clear interrupts */
