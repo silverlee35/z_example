@@ -43,3 +43,7 @@
 &gpt2 {
 	status = "okay";
 };
+
+&usdhc1 {
+	status = "okay";
+};
