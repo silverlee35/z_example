@@ -389,7 +389,11 @@ build_on_all: <True|False> (default False)
 
 depends_on: <list of features>
     A board or platform can announce what features it supports, this option
-    will enable the test only those platforms that provide this feature.
+    will enable the test only on those platforms that provide all these features.
+
+depends_on_anyof: <list of features>
+    A board or platform can announce what features it supports, this option
+    will enable the test if any of the listed features is supported.
 
 levels: <list of levels>
     Test levels this test should be part of. If a level is present, this

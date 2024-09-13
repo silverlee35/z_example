@@ -1,0 +1,13 @@
+sample:
+  name: Memory Protection Unit (MPU) Sample
+tests:
+  sample.mpu.read_write:
+    platform_key:
+      - arch
+    arch_allow:
+      - arm
+    tags:
+      - mpu
+    depends_on:
+      - mpu
+    harness: keyboard
