@@ -289,6 +289,7 @@ endchoice
 
 config BT_CTLR_TEST
 	bool "Run in-system unit tests"
+	default y if TEST
 	help
 	  Run in-system unit tests
 
