@@ -11,6 +11,7 @@
 	aliases {
 		led0 = &green_led;
 		sw0 = &user_button;
+		sdhc0 = &usdhc1;
 	};
 
 	leds {
@@ -80,4 +81,16 @@
 &lpi2c3 {
 	pinctrl-0 = <&pinmux_lpi2c3>;
 	pinctrl-names = "default";
+};
+
+&usdhc1 {
+	detect-dat3;
+	pwr-gpios = <&gpio4 14 GPIO_ACTIVE_LOW>;
+	pinctrl-0 = <&pinmux_usdhc1>;
+	pinctrl-1 = <&pinmux_usdhc1_dat3_nopull>;
+	pinctrl-names = "default", "nopull";
+	sdmmc {
+		compatible = "zephyr,sdmmc-disk";
+		status = "okay";
+	};
 };
