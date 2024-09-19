@@ -319,26 +319,64 @@ static void spi_mcux_dma_callback(const struct device *dev, void *arg,
 		}
 	}
 #if CONFIG_SPI_ASYNC
+	int ret;
+
 	if (data->ctx.asynchronous &&
 	((data->status_flags & SPI_MCUX_LPSPI_DMA_DONE_FLAG)  ==
 	SPI_MCUX_LPSPI_DMA_DONE_FLAG)) {
-		/* Load dma blocks of equal length */
-		size_t dma_size = MIN(data->ctx.tx_len, data->ctx.rx_len);
-
-		if (dma_size == 0) {
-			dma_size = MAX(data->ctx.tx_len, data->ctx.rx_len);
-		}
+		/* dma_size of completed transfers were the same for TX and RX */
+		size_t dma_size = data->ctx.tx_len;
 
 		spi_context_update_tx(&data->ctx, 1, dma_size);
 		spi_context_update_rx(&data->ctx, 1, dma_size);
 
 		if (data->ctx.tx_len == 0 && data->ctx.rx_len == 0) {
 			spi_context_complete(&data->ctx, spi_dev, 0);
+			return;
 		}
+
+		/* Restart DMA for next buffer */
+		/* Load dma blocks of equal length */
+		dma_size = MIN(data->ctx.tx_len, data->ctx.rx_len);
+
+		if (dma_size == 0) {
+			dma_size = MAX(data->ctx.tx_len, data->ctx.rx_len);
+		}
+
+		/* Clear status flags */
+		data->status_flags = 0U;
+
+		/* Restart the RX DMA */
+		ret = dma_reload(dev,
+				 data->dma_rx.channel,
+				 data->dma_rx.dma_blk_cfg.source_address,
+				 (uint32_t) data->ctx.rx_buf,
+				 dma_size);
+		if (ret != 0) {
+			LOG_ERR("RX dma_reload() failed with error %x.", ret);
+			data->status_flags |= SPI_MCUX_LPSPI_DMA_ERROR_FLAG;
+		}
+
+		/* Restart the TX DMA */
+		ret = dma_reload(dev,
+				 data->dma_tx.channel,
+				 (uint32_t) data->ctx.tx_buf,
+				 data->dma_tx.dma_blk_cfg.dest_address,
+				 dma_size);
+		if (ret != 0) {
+			LOG_ERR("TX dma_reload() failed with error %x.", ret);
+			data->status_flags |= SPI_MCUX_LPSPI_DMA_ERROR_FLAG;
+		}
+
 		return;
 	}
-#endif
+
+	if (!data->ctx.asynchronous) {
+		spi_context_complete(&data->ctx, spi_dev, 0);
+	}
+#else
 	spi_context_complete(&data->ctx, spi_dev, 0);
+#endif /* CONFIG_SPI_ASYNC */
 }
 
 static int spi_mcux_dma_tx_load(const struct device *dev, const uint8_t *buf, size_t len)
@@ -367,8 +405,6 @@ static int spi_mcux_dma_tx_load(const struct device *dev, const uint8_t *buf, si
 		blk_cfg->source_address = (uint32_t)buf;
 		stream->dma_cfg.channel_direction = MEMORY_TO_PERIPHERAL;
 	}
-	/* Enable scatter/gather */
-	blk_cfg->source_gather_en = 1;
 	/* Dest is LPSPI tx fifo */
 	blk_cfg->dest_address = LPSPI_GetTxRegisterAddress(base);
 	blk_cfg->block_size = len;
@@ -411,8 +447,6 @@ static int spi_mcux_dma_rx_load(const struct device *dev, uint8_t *buf,
 		stream->dma_cfg.channel_direction = PERIPHERAL_TO_MEMORY;
 	}
 	blk_cfg->block_size = len;
-	/* Enable scatter/gather */
-	blk_cfg->dest_scatter_en = 1;
 	/* Source is LPSPI rx fifo */
 	blk_cfg->source_address = LPSPI_GetRxRegisterAddress(base);
 	stream->dma_cfg.source_burst_length = 1;
