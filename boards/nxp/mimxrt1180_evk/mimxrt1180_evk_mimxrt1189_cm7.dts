@@ -34,3 +34,7 @@
 &gpt2 {
 	status = "okay";
 };
+
+&lptmr1 {
+	status = "okay";
+};
