@@ -1106,3 +1106,9 @@ test_i2c_apds9253: apds9253@96 {
 	rate = <APDS9253_MEASUREMENT_RATE_50MS>;
 	resolution = <APDS9253_RESOLUTION_16BIT_25MS>;
 };
+
+test_i2c_sts4x: sts4x@97 {
+	compatible = "sensirion,sts4x";
+	reg = <0x97>;
+	repeatability = <2>;
+};
