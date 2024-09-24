@@ -151,7 +151,7 @@ config BT_MESH_ADV_PRIO
 
 endif # BT_MESH_WORKQ_MESH
 
-config BT_MESH_WORKQ_SYS
+overlay_workq_sys_conf
 	bool "Send messages from the system workqueue"
 	help
 	  When this option is selected, the mesh sends messages from
