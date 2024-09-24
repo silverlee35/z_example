@@ -38,6 +38,7 @@
 #include "btp_tbs.h"
 #include "btp_tmap.h"
 #include "btp_ots.h"
+#include "btp_sdp.h"
 
 #define BTP_MTU 1024
 #define BTP_DATA_MAX_SIZE (BTP_MTU - sizeof(struct btp_hdr))
@@ -75,13 +76,15 @@
 #define BTP_SERVICE_ID_TBS	27
 #define BTP_SERVICE_ID_TMAP	28
 #define BTP_SERVICE_ID_OTS	29
+#define BTP_SERVICE_ID_SDP	30
 
-#define BTP_SERVICE_ID_MAX	BTP_SERVICE_ID_OTS
+#define BTP_SERVICE_ID_MAX	BTP_SERVICE_ID_SDP
 
 #define BTP_STATUS_SUCCESS	0x00
 #define BTP_STATUS_FAILED	0x01
 #define BTP_STATUS_UNKNOWN_CMD	0x02
 #define BTP_STATUS_NOT_READY	0x03
+#define BTP_STATUS_NOT_SUPPORT	0x04
 
 #define BTP_STATUS_VAL(err) (err) ? BTP_STATUS_FAILED : BTP_STATUS_SUCCESS
 
