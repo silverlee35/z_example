@@ -2,10 +2,10 @@
 
 #include "nrf54h20dk_nrf54h20_common.dtsi"
 
-&dut {
-	memory-regions = <&cpuapp_dma_region>;
+&timer137 {
+	interrupts = <467 (NRF_DEFAULT_IRQ_PRIORITY + 1)>;
 };
 
 &dut2 {
-	memory-regions = <&dma_fast_region>;
+	status = "disabled";
 };
