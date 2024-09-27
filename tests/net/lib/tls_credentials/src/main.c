@@ -224,7 +224,8 @@ static void test_csr(void)
 	memset(csr_buf, 0, sizeof(csr_buf));
 	memset(pk_buf_a, 0, sizeof(pk_buf_a));
 
-	return 0;
+	zassert_true(false);
+
 
 	/* Should fail if CSR buffer is too small for key */
 	csr_len = 10;
