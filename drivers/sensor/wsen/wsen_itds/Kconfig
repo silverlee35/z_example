@@ -15,6 +15,8 @@ if ITDS
 
 config ITDS_TRIGGER
 	bool "Trigger mode"
+	depends on GPIO
+	depends on $(dt_compat_any_has_prop,$(DT_COMPAT_WE_WSEN_ITDS),int-gpios)
 	help
 	  Set to enable trigger mode using gpio interrupt, interrupts are
 	  configured to line INT0.

@@ -26,11 +26,13 @@ config WSEN_PADS_TRIGGER_NONE
 config WSEN_PADS_TRIGGER_GLOBAL_THREAD
 	bool "Use global thread"
 	depends on GPIO
+	depends on $(dt_compat_any_has_prop,$(DT_COMPAT_WE_WSEN_PADS),drdy-gpios)
 	select WSEN_PADS_TRIGGER
 
 config WSEN_PADS_TRIGGER_OWN_THREAD
 	bool "Use own thread"
 	depends on GPIO
+	depends on $(dt_compat_any_has_prop,$(DT_COMPAT_WE_WSEN_PADS),drdy-gpios)
 	select WSEN_PADS_TRIGGER
 
 endchoice # WSEN_PADS_TRIGGER_MODE
