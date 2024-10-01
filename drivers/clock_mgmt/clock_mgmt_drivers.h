@@ -17,6 +17,10 @@ extern "C" {
 
 /* Macro definitions for common clock drivers */
 
+#define Z_CLOCK_MGMT_CLOCK_SOURCE_DATA_DEFINE(node_id, prop, idx)
+#define Z_CLOCK_MGMT_CLOCK_SOURCE_DATA_GET(node_id, prop, idx)      \
+	DT_PHA_BY_IDX(node_id, prop, idx, gate)
+
 /** @endcond */
 
 #ifdef __cplusplus
