@@ -57,6 +57,8 @@ config CLOCK_MGMT_SOURCE
 	help
 	  Clock source driver, for fixed clock sources that may be gated/ungated
 
+source "drivers/clock_mgmt/nxp_syscon/Kconfig"
+
 module = CLOCK_MGMT
 module-str = clock-mgmt
 source "subsys/logging/Kconfig.template.log_config"
