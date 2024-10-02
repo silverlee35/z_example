@@ -61,6 +61,14 @@ tests:
       - qemu_cortex_a53         # ARM Cortex-A53 (ARMv8-A ISA)
     extra_configs:
       - CONFIG_LLEXT_STORAGE_WRITABLE=n
+  llext.simple.devices_by_hash:
+    arch_allow: arm # Xtensa needs writable storage
+    filter: not CONFIG_MPU and not CONFIG_MMU and not CONFIG_SOC_SERIES_S32ZE
+    extra_configs:
+      - arch:arm:CONFIG_ARM_MPU=n
+      - arch:arm:CONFIG_ARM_AARCH32_MMU=n
+      - CONFIG_LLEXT_STORAGE_WRITABLE=n
+      - CONFIG_LLEXT_EXPORT_DEV_IDS_BY_HASH=y
   llext.simple.writable:
     arch_allow: arm xtensa
     integration_platforms:

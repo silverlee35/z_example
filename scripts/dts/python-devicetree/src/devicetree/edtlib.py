@@ -72,6 +72,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Iterable, List, NoReturn, \
     Optional, Set, TYPE_CHECKING, Tuple, Union
+import hashlib
 import logging
 import os
 import re
@@ -89,6 +90,12 @@ from devicetree.dtlib import Node as dtlib_Node
 from devicetree.dtlib import Property as dtlib_Property
 from devicetree.grutils import Graph
 from devicetree._private import _slice_helper
+
+def _compute_hash(path: str) -> str:
+    # Calculates the hash associated with the node's full path.
+    hasher = hashlib.sha256()
+    hasher.update(path.encode())
+    return hasher.hexdigest()
 
 #
 # Public classes
@@ -1005,6 +1012,11 @@ class Node:
       The ordinal is defined for all Nodes, and is unique among nodes in its
       EDT 'nodes' list.
 
+    hash:
+      A hashed value of the devicetree path of the node. This is defined for
+      all Nodes, and is checked for uniqueness among nodes in its EDT 'nodes'
+      list.
+
     required_by:
       A list with the nodes that directly depend on the node
 
@@ -1109,6 +1121,7 @@ class Node:
         self.interrupts: List[ControllerAndData] = []
         self.pinctrls: List[PinCtrl] = []
         self.bus_node: Optional['Node'] = None
+        self.hash: str = _compute_hash(dt_node.path)
 
         # Private, don't touch outside the class:
         self._node: dtlib_Node = dt_node
@@ -2331,6 +2344,8 @@ class EDT:
         # Creates a list of edtlib.Node objects from the dtlib.Node objects, in
         # self.nodes
 
+        hash2node: Dict[str, Node] = {}
+
         for dt_node in self._dt.node_iter():
             # Warning: We depend on parent Nodes being created before their
             # children. This is guaranteed by node_iter().
@@ -2343,6 +2358,11 @@ class EDT:
             node._init_binding()
             node._init_regs()
             node._init_ranges()
+
+            if node.hash in hash2node:
+                _err(f"hash collision between '{node.path}' and "
+                     f"'{hash2node[node.hash].path}'")
+            hash2node[node.hash] = node
 
             self.nodes.append(node)
             self._node2enode[dt_node] = node
