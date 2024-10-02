@@ -214,7 +214,9 @@ void soc_early_init_hook(void)
 #endif
 
 #ifdef CONFIG_SOC_GECKO_DEV_INIT
+#if CONFIG_HW_HAS_SILABS_DCDC
 	sl_device_init_dcdc();
+#endif
 	sl_device_init_hfxo();
 	sl_device_init_dpll();
 

@@ -132,6 +132,13 @@
 	status = "okay";
 };
 
+&dcdc {
+	status = "okay";
+	regulator-boot-on;
+	regulator-initial-mode = <0>; /* buck */
+	silabs,pfmx-peak-current-microamp = <120000>;
+};
+
 &flash0 {
 	partitions {
 		compatible = "fixed-partitions";

@@ -31,6 +31,12 @@
 	};
 };
 
+&dcdc {
+	status = "okay";
+	regulator-boot-on;
+	regulator-initial-mode = <0>; /* buck */
+};
+
 &flash0 {
 	partitions {
 		/* Reserve 48 KiB for the bootloader */
