@@ -263,7 +263,7 @@
 		};
 
 		spi0: spi@40080000 {
-			compatible = "raspberrypi,pico-spi", "arm,pl022";
+			compatible = "arm,pl022";
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <0x40080000 DT_SIZE_K(4)>;
@@ -275,7 +275,7 @@
 		};
 
 		spi1: spi@40088000 {
-			compatible = "raspberrypi,pico-spi", "arm,pl022";
+			compatible = "arm,pl022";
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <0x40088000 DT_SIZE_K(4)>;

@@ -69,7 +69,7 @@ hardware features:
      - :dtcompatible:`raspberrypi,pico-pwm`
    * - SPI
      - :kconfig:option:`CONFIG_SPI`
-     - :dtcompatible:`raspberrypi,pico-spi`
+     - :dtcompatible:`arm,pl022`
    * - UART
      - :kconfig:option:`CONFIG_SERIAL`
      - :dtcompatible:`raspberrypi,pico-uart`
