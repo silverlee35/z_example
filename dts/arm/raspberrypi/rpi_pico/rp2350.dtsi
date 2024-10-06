@@ -243,7 +243,7 @@
 		};
 
 		uart0: uart@40070000 {
-			compatible = "raspberrypi,pico-uart", "arm,pl011";
+			compatible = "arm,pl011";
 			reg = <0x40070000 DT_SIZE_K(4)>;
 			clocks = <&clocks RPI_PICO_CLKID_CLK_PERI>;
 			resets = <&reset RPI_PICO_RESETS_RESET_UART0>;
@@ -253,7 +253,7 @@
 		};
 
 		uart1: uart@40078000 {
-			compatible = "raspberrypi,pico-uart", "arm,pl011";
+			compatible = "arm,pl011";
 			reg = <0x40078000 DT_SIZE_K(4)>;
 			clocks = <&clocks RPI_PICO_CLKID_CLK_PERI>;
 			resets = <&reset RPI_PICO_RESETS_RESET_UART1>;
