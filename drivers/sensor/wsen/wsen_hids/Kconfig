@@ -26,11 +26,13 @@ config WSEN_HIDS_TRIGGER_NONE
 config WSEN_HIDS_TRIGGER_GLOBAL_THREAD
 	bool "Use global thread"
 	depends on GPIO
+	depends on $(dt_compat_any_has_prop,$(DT_COMPAT_WE_WSEN_HIDS),drdy-gpios)
 	select WSEN_HIDS_TRIGGER
 
 config WSEN_HIDS_TRIGGER_OWN_THREAD
 	bool "Use own thread"
 	depends on GPIO
+	depends on $(dt_compat_any_has_prop,$(DT_COMPAT_WE_WSEN_HIDS),drdy-gpios)
 	select WSEN_HIDS_TRIGGER
 
 endchoice # WSEN_HIDS_TRIGGER_MODE
