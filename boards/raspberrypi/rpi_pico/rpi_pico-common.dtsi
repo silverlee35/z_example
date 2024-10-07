@@ -6,7 +6,7 @@
 
 #include <freq.h>
 
-#include <rpi_pico/rp2040.dtsi>
+#include <raspberrypi/rpi_pico/rp2040.dtsi>
 #include "rpi_pico-pinctrl.dtsi"
 #include <zephyr/dt-bindings/pwm/pwm.h>
 
@@ -89,11 +89,6 @@
 	};
 };
 
-&clocks {
-	pinctrl-0 = <&clocks_default>;
-	pinctrl-names = "default";
-};
-
 &uart0 {
 	current-speed = <115200>;
 	status = "okay";
@@ -110,13 +105,6 @@
 	status = "okay";
 	pinctrl-0 = <&i2c0_default>;
 	pinctrl-names = "default";
-};
-
-&i2c1 {
-	pinctrl-0 = <&i2c1_default>;
-	pinctrl-names = "default";
-	status = "disabled";
-	clock-frequency = <I2C_BITRATE_FAST>;
 };
 
 &spi0 {
