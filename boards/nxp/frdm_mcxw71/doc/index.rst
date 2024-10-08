@@ -65,6 +65,8 @@ The ``frdm_mcxw71`` board target in Zephyr currently supports the following feat
 +-----------+------------+-------------------------------------+
 | LPTMR     | on-chip    | counter                             |
 +-----------+------------+-------------------------------------+
+| VREF      | on-chip    | regulator                           |
++-----------+------------+-------------------------------------+
 
 
 Programming and Debugging
