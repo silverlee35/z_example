@@ -66,7 +66,7 @@ hardware features:
      - :dtcompatible:`snps,designware-i2c`
    * - SPI
      - :kconfig:option:`CONFIG_SPI`
-     - :dtcompatible:`raspberrypi,pico-spi`
+     - :dtcompatible:`arm,pl022`
    * - USB Device
      - :kconfig:option:`CONFIG_USB_DEVICE_STACK`
      - :dtcompatible:`raspberrypi,pico-usbd`
