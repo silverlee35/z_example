@@ -121,6 +121,10 @@ static ALWAYS_INLINE void clock_init(void)
 	CLOCK_SetIpSrcDiv(kCLOCK_Lpi2c1, kSCG_SysClkDivBy16);
 
 	/* Ungate clocks if the peripheral is enabled in devicetree */
+	if (DT_NODE_HAS_COMPAT_STATUS(DT_NODELABEL(vref), nxp_vref, okay)) {
+		CLOCK_EnableClock(kCLOCK_Vref0);
+	}
+
 	if (DT_NODE_HAS_COMPAT_STATUS(DT_NODELABEL(lpuart0), nxp_lpc_lpuart, okay)) {
 		CLOCK_EnableClock(kCLOCK_Lpuart0);
 	}

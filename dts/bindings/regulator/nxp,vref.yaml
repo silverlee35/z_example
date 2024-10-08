@@ -35,7 +35,7 @@ properties:
       appropriate device data sheet, in microseconds.
 
   nxp,current-compensation-en:
-    type: bool
+    type: boolean
     description: |
       Enable second-order curvature compensation.
       This must be enabled to achieve the performance stated in the datasheet.
