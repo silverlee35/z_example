@@ -7,7 +7,7 @@
 
 /dts-v1/;
 
-#include <rpi_pico/rp2040.dtsi>
+#include <raspberrypi/rpi_pico/rp2040.dtsi>
 #include "xiao_rp2040-pinctrl.dtsi"
 #include "seeed_xiao_connector.dtsi"
 #include <freq.h>
@@ -86,11 +86,6 @@
 	};
 };
 
-&clocks {
-	pinctrl-0 = <&clocks_default>;
-	pinctrl-names = "default";
-};
-
 &timer {
 	status = "okay";
 };
@@ -100,6 +95,7 @@
 	status = "okay";
 	pinctrl-0 = <&uart0_default>;
 	pinctrl-names = "default";
+	fifo-enable;
 };
 
 &i2c1 {

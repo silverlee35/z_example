@@ -9,7 +9,7 @@
 
 #include <freq.h>
 
-#include <rpi_pico/rp2040.dtsi>
+#include <raspberrypi/rpi_pico/rp2040.dtsi>
 #include "w5500_evb_pico-pinctrl.dtsi"
 #include <zephyr/dt-bindings/pwm/pwm.h>
 
@@ -112,16 +112,12 @@
 	};
 };
 
-&clocks {
-	pinctrl-0 = <&clocks_default>;
-	pinctrl-names = "default";
-};
-
 &uart0 {
 	current-speed = <115200>;
 	status = "okay";
 	pinctrl-0 = <&uart0_default>;
 	pinctrl-names = "default";
+	fifo-enable;
 };
 
 &gpio0 {

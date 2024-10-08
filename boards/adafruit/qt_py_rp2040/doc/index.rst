@@ -51,7 +51,7 @@ hardware features:
      - :dtcompatible:`arm,v6m-nvic`
    * - UART
      - :kconfig:option:`CONFIG_SERIAL`
-     - :dtcompatible:`raspberrypi,pico-uart`
+     - :dtcompatible:`arm,pl011`
    * - GPIO
      - :kconfig:option:`CONFIG_GPIO`
      - :dtcompatible:`raspberrypi,pico-gpio`
