@@ -54,6 +54,10 @@ static void adxl362_gpio_callback(const struct device *dev,
 	struct adxl362_data *drv_data =
 		CONTAINER_OF(cb, struct adxl362_data, gpio_cb);
 
+	if (IS_ENABLED(CONFIG_ADXL362_STREAM)) {
+		adxl362_stream_irq_handler(drv_data->dev);
+	}
+
 #if defined(CONFIG_ADXL362_TRIGGER_OWN_THREAD)
 	k_sem_give(&drv_data->gpio_sem);
 #elif defined(CONFIG_ADXL362_TRIGGER_GLOBAL_THREAD)
