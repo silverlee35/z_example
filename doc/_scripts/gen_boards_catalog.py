@@ -9,6 +9,7 @@ import list_boards, list_hardware
 import pykwalify
 import yaml
 import zephyr_module
+from devicetree import edtlib
 from gen_devicetree_rest import VndLookup
 
 ZEPHYR_BASE = Path(__file__).parents[2]
@@ -105,12 +106,28 @@ def get_catalog():
         full_name = board.full_name or board.name
         doc_page = guess_doc_page(board)
 
+        TWISTER_OUT = ZEPHYR_BASE / "twister-out"
+        supported_features = set()
+        if TWISTER_OUT.exists():
+            dts_files = list(TWISTER_OUT.glob(f'{board.name}*/**/zephyr.dts'))
+
+            if dts_files:
+                for dts_file in dts_files:
+                    edt = edtlib.EDT(dts_file, bindings_dirs=[ZEPHYR_BASE / "dts/bindings"])
+                    okay_nodes = [node for node in edt.nodes if node.status == "okay" and node.matching_compat is not None]
+
+                    for node in okay_nodes:
+                        binding_path = Path(node.binding_path)
+                        binding_type = binding_path.relative_to(ZEPHYR_BASE / "dts/bindings").parts[0]
+                        supported_features.add(binding_type)
+
         board_catalog[board.name] = {
             "full_name": full_name,
             "doc_page": doc_page.relative_to(ZEPHYR_BASE).as_posix() if doc_page else None,
             "vendor": vendor,
             "archs": list(archs),
             "socs": list(socs),
+            "supported_features": list(supported_features),
             "image": guess_image(board),
         }
 
@@ -119,5 +136,16 @@ def get_catalog():
         family = soc.family or "<no family>"
         series = soc.series or "<no series>"
         socs_hierarchy.setdefault(family, {}).setdefault(series, []).append(soc.name)
+
+    # if there is a board_catalog.yaml file, load it (yes, it's already late but it's a hack for
+    # showing off the hw capability selection feature so shh)
+    BOARD_CATALOG_FILE = ZEPHYR_BASE / "doc" / "board_catalog.yaml"
+    if Path(BOARD_CATALOG_FILE).exists():
+        with open(BOARD_CATALOG_FILE, "r") as f:
+            board_catalog = yaml.safe_load(f)
+    else :
+        # save the board catalog as a pickle file
+        with open(BOARD_CATALOG_FILE, "w") as f:
+            yaml.dump(board_catalog, f)
 
     return {"boards": board_catalog, "vendors": vnd_lookup.vnd2vendor, "socs": socs_hierarchy}
