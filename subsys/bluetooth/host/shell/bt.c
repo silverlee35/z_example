@@ -23,6 +23,7 @@
 #include <zephyr/sys/util.h>
 #include <zephyr/sys/util_macro.h>
 #include <zephyr/kernel.h>
+#include <zephyr/init.h>
 
 #include <zephyr/settings/settings.h>
 
@@ -35,6 +36,7 @@
 #include <zephyr/bluetooth/ead.h>
 
 #include <zephyr/shell/shell.h>
+#include <zephyr/shell/shell_backend.h>
 #include "bt_shell_private.h"
 
 #include "audio/shell/audio.h"
@@ -1324,8 +1326,6 @@ static int cmd_init(const struct shell *sh, size_t argc, char *argv[])
 {
 	int err;
 	bool sync = false;
-
-	ctx_shell = sh;
 
 	for (size_t argn = 1; argn < argc; argn++) {
 		const char *arg = argv[argn];
@@ -5164,3 +5164,20 @@ SHELL_STATIC_SUBCMD_SET_CREATE(bt_cmds,
 );
 
 SHELL_CMD_REGISTER(bt, &bt_cmds, "Bluetooth shell commands", cmd_default_handler);
+
+static int bt_shell_backend_init(void)
+{
+	const struct shell *backend;
+	int rc = 0;
+
+	backend = shell_backend_get_by_name(CONFIG_BT_SHELL_BACKEND);
+	if (backend) {
+		ctx_shell = backend;
+	} else {
+		rc = -1;
+	}
+
+	return rc;
+}
+
+SYS_INIT(bt_shell_backend_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
