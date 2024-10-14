@@ -33,6 +33,7 @@
 		magn0 = &bmm150;
 		rtc = &pfc8563_rtc;
 		sdhc0 = &sd0;
+		led0 = &axp2101_led;
 	};
 };
 
@@ -71,6 +72,18 @@
 		compatible = "nxp,pcf8563";
 		reg = <0x51>;
 		status = "okay";
+	};
+
+	axp2101_pmic: axp2101@34 {
+		compatible = "x-powers,axp2101";
+		reg = <0x34>;
+		status = "okay";
+
+		axp2101_led: axp2101_led {
+			compatible = "x-powers,axp2101-led";
+			status = "okay";
+			x-powers,mode = "by-reg";
+		};
 	};
 };
 
