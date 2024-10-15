@@ -113,3 +113,7 @@
 &ctimer0 {
 	status = "okay";
 };
+
+&lpcmp0 {
+	status = "okay";
+};
