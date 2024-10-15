@@ -5,15 +5,17 @@ import logging
 from collections import namedtuple
 from pathlib import Path
 
-import list_boards
+import list_boards, list_hardware
 import pykwalify
 import yaml
 import zephyr_module
+from devicetree import edtlib
 from gen_devicetree_rest import VndLookup
 
 ZEPHYR_BASE = Path(__file__).parents[2]
 
 logger = logging.getLogger(__name__)
+
 
 def guess_file_from_patterns(directory, patterns, name, extensions):
     for pattern in patterns:
@@ -77,6 +79,7 @@ def get_catalog():
     )
 
     boards = list_boards.find_v2_boards(args_find_boards)
+    systems = list_hardware.find_v2_systems(args_find_boards)
     board_catalog = {}
 
     for board in boards:
@@ -99,29 +102,50 @@ def get_catalog():
             except Exception as e:
                 logger.error(f"Error parsing twister file {twister_file}: {e}")
 
-        full_name = board.full_name
+        socs = {soc.name for soc in board.socs}
+        full_name = board.full_name or board.name
         doc_page = guess_doc_page(board)
 
-        if not full_name:
-            # If full commercial name of the board is not available through board.full_name, we look
-            # for the title in the board's documentation page.
-            # /!\ This is a temporary solution until #79571 sets all the full names in the boards
-            if doc_page:
-                with open(doc_page, "r") as f:
-                    lines = f.readlines()
-                    for i, line in enumerate(lines):
-                        if line.startswith("#"):
-                            full_name = lines[i - 1].strip()
-                            break
-            else:
-                full_name = board.name
+        TWISTER_OUT = ZEPHYR_BASE / "twister-out"
+        supported_features = set()
+        if TWISTER_OUT.exists():
+            dts_files = list(TWISTER_OUT.glob(f'{board.name}*/**/zephyr.dts'))
+
+            if dts_files:
+                for dts_file in dts_files:
+                    edt = edtlib.EDT(dts_file, bindings_dirs=[ZEPHYR_BASE / "dts/bindings"])
+                    okay_nodes = [node for node in edt.nodes if node.status == "okay" and node.matching_compat is not None]
+
+                    for node in okay_nodes:
+                        binding_path = Path(node.binding_path)
+                        binding_type = binding_path.relative_to(ZEPHYR_BASE / "dts/bindings").parts[0]
+                        supported_features.add(binding_type)
 
         board_catalog[board.name] = {
             "full_name": full_name,
             "doc_page": doc_page.relative_to(ZEPHYR_BASE).as_posix() if doc_page else None,
             "vendor": vendor,
             "archs": list(archs),
+            "socs": list(socs),
+            "supported_features": list(supported_features),
             "image": guess_image(board),
         }
 
-    return {"boards": board_catalog, "vendors": vnd_lookup.vnd2vendor}
+    socs_hierarchy = {}
+    for soc in systems.get_socs():
+        family = soc.family or "<no family>"
+        series = soc.series or "<no series>"
+        socs_hierarchy.setdefault(family, {}).setdefault(series, []).append(soc.name)
+
+    # if there is a board_catalog.yaml file, load it (yes, it's already late but it's a hack for
+    # showing off the hw capability selection feature so shh)
+    BOARD_CATALOG_FILE = ZEPHYR_BASE / "doc" / "board_catalog.yaml"
+    if Path(BOARD_CATALOG_FILE).exists():
+        with open(BOARD_CATALOG_FILE, "r") as f:
+            board_catalog = yaml.safe_load(f)
+    else :
+        # save the board catalog as a pickle file
+        with open(BOARD_CATALOG_FILE, "w") as f:
+            yaml.dump(board_catalog, f)
+
+    return {"boards": board_catalog, "vendors": vnd_lookup.vnd2vendor, "socs": socs_hierarchy}
