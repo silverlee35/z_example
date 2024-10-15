@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <errno.h>
+#include <limits.h>
 #include <zephyr/kernel.h>
 
 #include <zephyr/settings/settings.h>
@@ -36,7 +37,7 @@ void settings_init(void)
 }
 
 #if defined(CONFIG_SETTINGS_DYNAMIC_HANDLERS)
-int settings_register(struct settings_handler *handler)
+int settings_register_with_cprio(struct settings_handler *handler, int cprio)
 {
 	int rc = 0;
 
@@ -55,11 +56,18 @@ int settings_register(struct settings_handler *handler)
 			goto end;
 		}
 	}
+
+	handler->cprio = cprio;
 	sys_slist_append(&settings_handlers, &handler->node);
 
 end:
 	k_mutex_unlock(&settings_lock);
 	return rc;
+}
+
+int settings_register(struct settings_handler *handler)
+{
+	return settings_register_with_cprio(handler, 0);
 }
 #endif /* CONFIG_SETTINGS_DYNAMIC_HANDLERS */
 
@@ -234,39 +242,74 @@ int settings_commit(void)
 	return settings_commit_subtree(NULL);
 }
 
+static bool skip_commit(int ch_cprio, int cprio, int *nprio)
+{
+	if (ch_cprio == cprio) {
+		return false;
+	}
+
+	if (ch_cprio > cprio) {
+		*nprio = (*nprio == cprio) ? ch_cprio : MIN(*nprio, ch_cprio);
+	}
+
+	return true;
+}
+
 int settings_commit_subtree(const char *subtree)
 {
 	int rc;
 	int rc2;
+	int cprio = INT_MIN;
 
 	rc = 0;
 
-	STRUCT_SECTION_FOREACH(settings_handler_static, ch) {
-		if (subtree && !settings_name_steq(ch->name, subtree, NULL)) {
-			continue;
-		}
-		if (ch->h_commit) {
-			rc2 = ch->h_commit();
-			if (!rc) {
-				rc = rc2;
-			}
-		}
-	}
+	while (true) {
+		int nprio = cprio;
 
-#if defined(CONFIG_SETTINGS_DYNAMIC_HANDLERS)
-	struct settings_handler *ch;
-	SYS_SLIST_FOR_EACH_CONTAINER(&settings_handlers, ch, node) {
-		if (subtree && !settings_name_steq(ch->name, subtree, NULL)) {
-			continue;
-		}
-		if (ch->h_commit) {
-			rc2 = ch->h_commit();
-			if (!rc) {
-				rc = rc2;
+		STRUCT_SECTION_FOREACH(settings_handler_static, ch) {
+			if (subtree && !settings_name_steq(ch->name, subtree, NULL)) {
+				continue;
+			}
+
+			if (ch->h_commit) {
+				if (skip_commit(ch->cprio, cprio, &nprio)) {
+					continue;
+				}
+
+				rc2 = ch->h_commit();
+				if (!rc) {
+					rc = rc2;
+				}
 			}
 		}
+
+		if (IS_ENABLED(CONFIG_SETTINGS_DYNAMIC_HANDLERS)) {
+			struct settings_handler *ch;
+
+			SYS_SLIST_FOR_EACH_CONTAINER(&settings_handlers, ch, node) {
+				if (subtree && !settings_name_steq(ch->name, subtree, NULL)) {
+					continue;
+				}
+
+				if (ch->h_commit) {
+					if (skip_commit(ch->cprio, cprio, &nprio)) {
+						continue;
+					}
+
+					rc2 = ch->h_commit();
+					if (!rc) {
+						rc = rc2;
+					}
+				}
+			}
+		}
+
+		if (nprio == cprio) {
+			break;
+		}
+
+		cprio = nprio;
 	}
-#endif /* CONFIG_SETTINGS_DYNAMIC_HANDLERS */
 
 	return rc;
 }
