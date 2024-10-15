@@ -105,7 +105,6 @@ struct lll_conn {
 		uint16_t default_tx_time;
 #endif
 		uint16_t default_tx_octets;
-		uint8_t update;
 	} dle;
 #endif /* CONFIG_BT_CTLR_DATA_LENGTH */
 
