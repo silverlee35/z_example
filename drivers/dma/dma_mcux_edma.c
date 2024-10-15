@@ -675,7 +675,7 @@ static int dma_mcux_edma_init(const struct device *dev)
 		LISTIFY(NUM_IRQS_WITHOUT_ERROR_IRQ(n),				\
 			DMA_MCUX_EDMA_IRQ_CONFIG, (;), n)			\
 										\
-		IF_ENABLED(UTIL_NOT(DT_INST_NODE_HAS_PROP(n, no_error_irq)),	\
+		IF_ENABLED(UTIL_NOT(DT_INST_PROP(n, no_error_irq)),		\
 			   (IRQ_CONFIG(n, NUM_IRQS_WITHOUT_ERROR_IRQ(n),	\
 			    dma_mcux_edma_error_irq_handler)))			\
 										\
@@ -715,7 +715,7 @@ static int dma_mcux_edma_init(const struct device *dev)
  */
 #define DMA_INIT(n)								\
 	DMAMUX_BASE_INIT_DEFINE(n)						\
-	static void dma_imx_config_func_##n(const struct device *dev);		\
+	DMA_MCUX_EDMA_CONFIG_FUNC(n)						\
 	static const struct dma_mcux_edma_config dma_config_##n = {		\
 		.base = (DMA_Type *)DT_INST_REG_ADDR(n),			\
 		DMAMUX_BASE_INIT(n)						\
@@ -732,8 +732,6 @@ static int dma_mcux_edma_init(const struct device *dev)
 			      &dma_mcux_edma_init, NULL,			\
 			      &dma_data_##n, &dma_config_##n,			\
 			      PRE_KERNEL_1, CONFIG_DMA_INIT_PRIORITY,		\
-			      &dma_mcux_edma_api);				\
-										\
-	DMA_MCUX_EDMA_CONFIG_FUNC(n);
+			      &dma_mcux_edma_api);
 
 DT_INST_FOREACH_STATUS_OKAY(DMA_INIT)
