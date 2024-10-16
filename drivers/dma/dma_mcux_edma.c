@@ -84,8 +84,10 @@ struct dma_mcux_edma_config {
 	uint32_t channel_gap[2];
 #endif
 	uint16_t dma_channels; /* number of channels */
+#if SOC_HAS_DMAMUX
 	uint8_t channels_per_mux;
 	uint8_t dmamux_reg_offset;
+#endif
 };
 
 static __aligned(32) EDMA_TCDPOOL_CACHE_ATTR edma_tcd_t
@@ -662,10 +664,12 @@ static int dma_mcux_edma_init(const struct device *dev)
 #define DMAMUX_BASE_INIT(n) .dmamux_base = &dmamux_base_##n[0],
 #define CHANNELS_PER_MUX(n) .channels_per_mux = DT_INST_PROP(n, dma_channels) /	\
 						ARRAY_SIZE(dmamux_base_##n),
+#define DMAMUX_REG_OFFSET(n) .dmamux_reg_offset = DT_INST_PROP(n, dmamux_reg_offset),
 #else
 #define DMAMUX_BASE_INIT_DEFINE(n)
 #define DMAMUX_BASE_INIT(n)
 #define CHANNELS_PER_MUX(n)
+#define DMAMUX_REG_OFFSET(n)
 #endif /* SOC_HAS_DMAMUX */
 
 #define DMA_INIT(n)								\
@@ -675,9 +679,9 @@ static int dma_mcux_edma_init(const struct device *dev)
 		.base = (DMA_Type *)DT_INST_REG_ADDR(n),			\
 		.dma_channels = (uint16_t)DT_INST_PROP(n, dma_channels),	\
 		.irq_config_func = dma_imx_config_func_##n,			\
-		.dmamux_reg_offset = DT_INST_PROP(n, dmamux_reg_offset),	\
 		DMAMUX_BASE_INIT(n)						\
 		CHANNELS_PER_MUX(n)						\
+		DMAMUX_REG_OFFSET(n)						\
 		DMA_MCUX_EDMA_CHANNEL_GAP(n)					\
 	};									\
 										\
