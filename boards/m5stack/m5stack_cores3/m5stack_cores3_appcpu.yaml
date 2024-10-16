@@ -1,5 +1,5 @@
-identifier: m5stack_cores3/esp32s3/appcpu/se
-name: M5Stack CoreS3 SE APPCPU
+identifier: m5stack_cores3/esp32s3/appcpu
+name: M5Stack CoreS3 APPCPU
 type: mcu
 arch: xtensa
 toolchain:
