@@ -13,6 +13,7 @@ supported:
   - uart
   - counter
   - pwm
+  - can
   - watchdog
   - pinctrl
   - flash
