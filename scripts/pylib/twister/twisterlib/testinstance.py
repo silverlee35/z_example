@@ -14,6 +14,7 @@ import logging
 import shutil
 import glob
 import csv
+from typing import Optional
 
 from twisterlib.environment import TwisterEnv
 from twisterlib.testsuite import TestCase, TestSuite
@@ -241,7 +242,7 @@ class TestInstance:
         self.handler = handler
 
     # Global testsuite parameters
-    def check_runnable(self, enable_slow=False, filter='buildable', fixtures=[], hardware_map=None):
+    def check_runnable(self, enable_slow=False, filter='buildable', fixtures=[], simulation: Optional[str]=None, hardware_map=None):
 
         if os.name == 'nt':
             # running on simulators is currently supported only for QEMU on Windows
