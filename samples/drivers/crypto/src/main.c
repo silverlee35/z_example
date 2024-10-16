@@ -27,6 +27,8 @@ LOG_MODULE_REGISTER(main);
 #define CRYPTO_DEV_COMPAT st_stm32_aes
 #elif DT_HAS_COMPAT_STATUS_OKAY(nxp_mcux_dcp)
 #define CRYPTO_DEV_COMPAT nxp_mcux_dcp
+#elif DT_HAS_COMPAT_STATUS_OKAY(nxp_s32_crypto_hse_mu)
+#define CRYPTO_DEV_COMPAT nxp_s32_crypto_hse_mu
 #elif CONFIG_CRYPTO_NRF_ECB
 #define CRYPTO_DEV_COMPAT nordic_nrf_ecb
 #elif DT_HAS_COMPAT_STATUS_OKAY(renesas_smartbond_crypto)
@@ -607,6 +609,54 @@ struct mode_test {
 	void (*mode_func)(const struct device *dev);
 };
 
+#ifdef CONFIG_CRYPTO_NXP_S32_HSE_FORMAT_KEY_CATALOG
+#include <Hse_Ip.h>
+static int crypto_nxp_s32_hse_format_key_element(const struct device *dev)
+{
+	uint8_t mu_instance = 0;
+	hseSrvDescriptor_t crypto_serv_desc;
+	Hse_Ip_ReqType crypto_req_type;
+	hseFormatKeyCatalogsSrv_t *format_key_serv =
+		&(crypto_serv_desc.hseSrv.formatKeyCatalogsReq);
+	uint8_t channel = Hse_Ip_GetFreeChannel(mu_instance);
+	hseKeyGroupCfgEntry_t crypto_ram_key_catalog[] = {{HSE_MU0_MASK,
+							   HSE_KEY_OWNER_ANY,
+							   HSE_KEY_TYPE_AES,
+							   HSE_MAX_RAM_KEYS,
+							   HSE_KEY128_BITS,
+							   {0U, 0U}},
+							  {0U, 0U, 0U, 0U, 0U, {0U, 0U}}};
+
+	hseKeyGroupCfgEntry_t crypto_nvm_key_catalog[] = {{HSE_MU0_MASK,
+							   HSE_KEY_OWNER_CUST,
+							   HSE_KEY_TYPE_AES,
+							   HSE_MAX_NVM_SYM_KEYS,
+							   HSE_KEY128_BITS,
+							   {0U, 0U}},
+							  {0U, 0U, 0U, 0U, 0U, {0U, 0U}}};
+
+	if (channel == HSE_IP_INVALID_MU_CHANNEL_U8) {
+		return -EIO;
+	}
+
+	crypto_req_type.eReqType = HSE_IP_REQTYPE_SYNC;
+	crypto_req_type.u32Timeout = 1000000000;
+
+	crypto_serv_desc.srvId = HSE_SRV_ID_FORMAT_KEY_CATALOGS;
+	format_key_serv->pNvmKeyCatalogCfg = HSE_PTR_TO_HOST_ADDR(crypto_nvm_key_catalog);
+	format_key_serv->pRamKeyCatalogCfg = HSE_PTR_TO_HOST_ADDR(crypto_ram_key_catalog);
+
+	if (Hse_Ip_ServiceRequest(mu_instance, channel, &crypto_req_type,
+				  &crypto_serv_desc) != HSE_SRV_RSP_OK) {
+		return -EIO;
+	}
+
+	Hse_Ip_ReleaseChannel(mu_instance, channel);
+
+	return 0;
+}
+#endif
+
 int main(void)
 {
 #ifdef CRYPTO_DRV_NAME
@@ -640,6 +690,13 @@ int main(void)
 	}
 
 	LOG_INF("Cipher Sample");
+
+#ifdef CONFIG_CRYPTO_NXP_S32_HSE_FORMAT_KEY_CATALOG
+	if (crypto_nxp_s32_hse_format_key_element(dev)) {
+		LOG_ERR("Failed to format key catalog");
+		return 0;
+	}
+#endif
 
 	for (i = 0; modes[i].mode; i++) {
 		LOG_INF("%s", modes[i].mode);
