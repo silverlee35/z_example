@@ -164,6 +164,13 @@ typedef int (*display_read_api)(const struct device *dev, const uint16_t x,
 				void *buf);
 
 /**
+ * @typedef display_finalize_frame_api
+ * @brief Callback API to indicate that all writes for the current frame are done
+ * See display_finalize_frame() for argument description
+ */
+typedef int *(*display_finalize_frame_api)(const struct device *dev);
+
+/**
  * @typedef display_get_framebuffer_api
  * @brief Callback API to get framebuffer pointer
  * See display_get_framebuffer() for argument description
@@ -222,6 +229,7 @@ __subsystem struct display_driver_api {
 	display_blanking_off_api blanking_off;
 	display_write_api write;
 	display_read_api read;
+	display_finalize_frame_api finalize_frame;
 	display_get_framebuffer_api get_framebuffer;
 	display_set_brightness_api set_brightness;
 	display_set_contrast_api set_contrast;
@@ -278,6 +286,28 @@ static inline int display_read(const struct device *dev, const uint16_t x,
 
 	return api->read(dev, x, y, desc, buf);
 }
+
+/**
+ * @brief Indicates that all writes for the current frame are done
+ *
+ * Can be used to present all previous writes simultaneously, for
+ * double buffered or latched displays.
+ *
+ * @param dev Pointer to device structure
+ *
+ * @retval 0 on success else negative errno code.
+ */
+static inline int display_finalize_frame(const struct device *dev)
+{
+	struct display_driver_api *api = (struct display_driver_api *)dev->api;
+
+	if (api->finalize_frame == NULL) {
+		return -ENOSYS;
+	}
+
+	return api->finalize_frame(dev);
+}
+
 
 /**
  * @brief Get pointer to framebuffer for direct access

@@ -38,6 +38,10 @@ void lvgl_flush_cb_mono(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color
 		display_write(display_dev, area->x1, area->y1, &desc, (void *)color_p);
 	}
 
+	if (is_last) {
+		display_finalize_frame(display_dev);
+	}
+
 	if (is_epd && is_last && data->blanking_on) {
 		/*
 		 * The entire screen has now been rendered. Update the
