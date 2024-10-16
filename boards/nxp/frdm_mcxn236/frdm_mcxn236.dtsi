@@ -107,7 +107,7 @@
 			label = "image-0";
 			reg = <0x00010000 DT_SIZE_K(480)>;
 		};
-		slot1_partition: partition@80000 {
+		slot1_partition: partition@88000 {
 			label = "image-1";
 			reg = <0x0088000 DT_SIZE_K(472)>;
 		};
@@ -116,5 +116,10 @@
 
 &flexpwm1_pwm0 {
 	pinctrl-0 = <&pinmux_flexpwm1_pwm0>;
+	pinctrl-names = "default";
+};
+
+&lpadc0 {
+	pinctrl-0 = <&pinmux_lpadc0>;
 	pinctrl-names = "default";
 };

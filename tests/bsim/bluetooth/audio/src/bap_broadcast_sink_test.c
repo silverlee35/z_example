@@ -24,7 +24,7 @@
 #include <zephyr/bluetooth/iso.h>
 #include <zephyr/bluetooth/uuid.h>
 #include <zephyr/kernel.h>
-#include <zephyr/net/buf.h>
+#include <zephyr/net_buf.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/sys/printk.h>
 #include <zephyr/sys/util.h>
@@ -410,7 +410,14 @@ static void broadcast_code_cb(struct bt_conn *conn,
 	memcpy(recv_state_broadcast_code, broadcast_code, BT_AUDIO_BROADCAST_CODE_SIZE);
 }
 
+static void scanning_state_cb(struct bt_conn *conn, bool is_scanning)
+{
+	printk("Assistant scanning %s\n", is_scanning ? "started" : "stopped");
+
+}
+
 static struct bt_bap_scan_delegator_cb scan_delegator_cbs = {
+	.scanning_state = scanning_state_cb,
 	.pa_sync_req = pa_sync_req_cb,
 	.pa_sync_term_req = pa_sync_term_req_cb,
 	.bis_sync_req = bis_sync_req_cb,
@@ -642,6 +649,12 @@ static int init(void)
 		return err;
 	}
 
+	err = bt_bap_scan_delegator_register(&scan_delegator_cbs);
+	if (err) {
+		FAIL("Scan delegator register failed (err %d)\n", err);
+		return err;
+	}
+
 	/* Test invalid input */
 	err = bt_bap_broadcast_sink_register_cb(NULL);
 	if (err == 0) {
@@ -655,7 +668,6 @@ static int init(void)
 		return err;
 	}
 
-	bt_bap_scan_delegator_register_cb(&scan_delegator_cbs);
 	bt_le_per_adv_sync_cb_register(&bap_pa_sync_cb);
 	bt_le_scan_cb_register(&bap_scan_cb);
 
@@ -750,7 +762,7 @@ static void test_broadcast_sink_create_inval(void)
 		return;
 	}
 
-	err = bt_bap_broadcast_sink_create(pa_sync, INVALID_BROADCAST_ID, &g_sink);
+	err = bt_bap_broadcast_sink_create(pa_sync, BT_BAP_INVALID_BROADCAST_ID, &g_sink);
 	if (err == 0) {
 		FAIL("bt_bap_broadcast_sink_create did not fail with invalid broadcast ID\n");
 		return;

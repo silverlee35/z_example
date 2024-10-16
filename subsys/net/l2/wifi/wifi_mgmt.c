@@ -41,6 +41,8 @@ const char *wifi_security_txt(enum wifi_security_type security)
 		return "WAPI";
 	case WIFI_SECURITY_TYPE_EAP_TLS:
 		return "EAP";
+	case WIFI_SECURITY_TYPE_WPA_AUTO_PERSONAL:
+		return "WPA/WPA2/WPA3 PSK";
 	case WIFI_SECURITY_TYPE_UNKNOWN:
 	default:
 		return "UNKNOWN";
@@ -813,6 +815,21 @@ static int wifi_get_connection_params(uint32_t mgmt_request, struct net_if *ifac
 
 NET_MGMT_REGISTER_REQUEST_HANDLER(NET_REQUEST_WIFI_CONN_PARAMS, wifi_get_connection_params);
 
+static int wifi_wps_config(uint32_t mgmt_request, struct net_if *iface, void *data, size_t len)
+{
+	const struct device *dev = net_if_get_device(iface);
+	const struct wifi_mgmt_ops *const wifi_mgmt_api = get_wifi_api(iface);
+	struct wifi_wps_config_params *params = data;
+
+	if (wifi_mgmt_api == NULL || wifi_mgmt_api->wps_config == NULL) {
+		return -ENOTSUP;
+	}
+
+	return wifi_mgmt_api->wps_config(dev, params);
+}
+
+NET_MGMT_REGISTER_REQUEST_HANDLER(NET_REQUEST_WIFI_WPS_CONFIG, wifi_wps_config);
+
 static int wifi_set_rts_threshold(uint32_t mgmt_request, struct net_if *iface,
 				  void *data, size_t len)
 {
@@ -833,6 +850,7 @@ static int wifi_set_rts_threshold(uint32_t mgmt_request, struct net_if *iface,
 
 NET_MGMT_REGISTER_REQUEST_HANDLER(NET_REQUEST_WIFI_RTS_THRESHOLD, wifi_set_rts_threshold);
 
+#ifdef CONFIG_WIFI_NM_WPA_SUPPLICANT_DPP
 static int wifi_dpp(uint32_t mgmt_request, struct net_if *iface,
 		    void *data, size_t len)
 {
@@ -848,6 +866,8 @@ static int wifi_dpp(uint32_t mgmt_request, struct net_if *iface,
 }
 
 NET_MGMT_REGISTER_REQUEST_HANDLER(NET_REQUEST_WIFI_DPP, wifi_dpp);
+
+#endif /* CONFIG_WIFI_NM_WPA_SUPPLICANT_DPP */
 
 static int wifi_pmksa_flush(uint32_t mgmt_request, struct net_if *iface,
 					   void *data, size_t len)
