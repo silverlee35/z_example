@@ -17,3 +17,5 @@ supported:
   - pinctrl
   - flash
   - i2c
+  - regulator
+  - adc
