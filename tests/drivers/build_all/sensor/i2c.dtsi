@@ -1087,3 +1087,12 @@ test_i2c_tmp1075: tmp1075@98 {
 	consecutive-fault-measurements = <4>;
 	interrupt-mode;
 };
+
+test_i2c_tmp435: tmp435@99 {
+	compatible = "ti,tmp435";
+	reg = <0x99>;
+	external-channel;
+	resistance-correction;
+	beta-compensation = <0x0f>;
+	status = "okay";
+};
