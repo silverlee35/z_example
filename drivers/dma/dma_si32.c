@@ -54,6 +54,8 @@ static struct dma_si32_data dma_si32_data = {.ctx = {
 
 __aligned(SI32_DMADESC_PRI_ALIGN) struct SI32_DMADESC_A_Struct channel_descriptors[CHANNEL_COUNT];
 
+static int dma_si32_stop(const struct device *dev, const uint32_t channel);
+
 static void dma_si32_isr_handler(const uint8_t channel)
 {
 	const struct SI32_DMADESC_A_Struct *channel_descriptor = &channel_descriptors[channel];
@@ -127,18 +129,25 @@ static int dma_si32_init(const struct device *dev)
 
 static int dma_si32_config(const struct device *dev, uint32_t channel, struct dma_config *cfg)
 {
-	ARG_UNUSED(dev);
-
 	const struct dma_block_config *block;
 	struct SI32_DMADESC_A_Struct *channel_descriptor;
 	struct dma_si32_channel_data *channel_data;
 	uint32_t ncount;
+	int ret;
 
 	LOG_INF("Configuring channel %" PRIu8, channel);
 
 	if (channel >= CHANNEL_COUNT) {
 		LOG_ERR("Invalid channel (id %" PRIu32 ", have %d)", channel, CHANNEL_COUNT);
 		return -EINVAL;
+	}
+
+	/* Prevent messing up (potentially) ongoing DMA operations and their settings by disabling
+	 * the channel before applying new settings.
+	 */
+	ret = dma_si32_stop(dev, channel);
+	if (ret) {
+		return ret;
 	}
 
 	channel_descriptor = &channel_descriptors[channel];
@@ -333,8 +342,6 @@ static int dma_si32_config(const struct device *dev, uint32_t channel, struct dm
 		return -EINVAL;
 	}
 
-	SI32_DMACTRL_A_enable_channel(SI32_DMACTRL_0, channel);
-
 	return 0;
 }
 
@@ -365,7 +372,6 @@ static int dma_si32_start(const struct device *dev, const uint32_t channel)
 	__ASSERT(SI32_DMACTRL_A_is_primary_selected(SI32_DMACTRL_0, channel),
 		 "Primary descriptors must be used for basic and auto-request operations.");
 	__ASSERT(SI32_SCONFIG_0->CONFIG.FDMAEN, "Fast mode is recommened to be enabled.");
-	__ASSERT(SI32_DMACTRL_0->CHENSET.U32 & BIT(channel), "Channel must be enabled.");
 	__ASSERT(SI32_DMACTRL_0->CHSTATUS.U32 & BIT(channel),
 		 "Channel must be waiting for request");
 
@@ -376,6 +382,8 @@ static int dma_si32_start(const struct device *dev, const uint32_t channel)
 
 	/* Enable interrupt for this DMA channels. */
 	irq_enable(DMACH0_IRQn + channel);
+
+	SI32_DMACTRL_A_enable_channel(SI32_DMACTRL_0, channel);
 
 	/* memory-to-memory transfers have to be started by this driver. When peripherals are
 	 * involved, the caller has to enable the peripheral to start the transfer.
@@ -404,6 +412,8 @@ static int dma_si32_stop(const struct device *dev, const uint32_t channel)
 	irq_disable(DMACH0_IRQn + channel);
 
 	channel_descriptors[channel].CONFIG.TMD = 0; /* Stop the DMA channel. */
+
+	SI32_DMACTRL_A_disable_channel(SI32_DMACTRL_0, channel);
 
 	return 0;
 }
