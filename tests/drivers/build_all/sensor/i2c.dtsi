@@ -1087,3 +1087,9 @@ test_i2c_tmp1075: tmp1075@98 {
 	consecutive-fault-measurements = <4>;
 	interrupt-mode;
 };
+
+test_i2c_wsen_hids_2525020210002: wsen_hids_2525020210002@99 {
+	compatible = "we,wsen-hids-2525020210002";
+	reg = <0x99>;
+	precision = "High";
+};
