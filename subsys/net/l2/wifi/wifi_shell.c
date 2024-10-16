@@ -2811,6 +2811,11 @@ SHELL_SUBCMD_ADD((wifi), ap, &wifi_cmd_ap,
 		 NULL,
 		 0, 0);
 
+SHELL_SUBCMD_ADD((wifi), ap, &wifi_cmd_ap,
+		 "Access Point mode commands.",
+		 NULL,
+		 0, 0);
+
 SHELL_STATIC_SUBCMD_SET_CREATE(wifi_twt_ops,
 	SHELL_CMD_ARG(quick_setup, NULL, " Start a TWT flow with defaults:\n"
 		"<twt_wake_interval: 1-262144us> <twt_interval: 1us-2^31us>.\n",
