@@ -3685,6 +3685,22 @@ int bt_conn_le_create(const bt_addr_le_t *peer, const struct bt_conn_le_create_p
 	struct bt_conn *conn;
 	int err;
 
+	CHECKIF(ret_conn == NULL) {
+		return -EINVAL;
+	}
+
+	CHECKIF(*ret_conn != NULL) {
+		/** This warning is to inform the user that the connection reference is not NULL and
+		 * it may lead to a potential connection object leakage.
+		 */
+		LOG_WRN("*conn should be unreferenced and initialized to NULL before passing to"
+			" %s", __func__);
+
+		if (IS_ENABLED(CONFIG_BT_CONN_CHECK_NULL_BEFORE_CREATE)) {
+			return -EINVAL;
+		}
+	}
+
 	err = conn_le_create_common_checks(peer, conn_param);
 	if (err) {
 		return err;
@@ -3743,6 +3759,22 @@ int bt_conn_le_create_synced(const struct bt_le_ext_adv *adv,
 {
 	struct bt_conn *conn;
 	int err;
+
+	CHECKIF(ret_conn == NULL) {
+		return -EINVAL;
+	}
+
+	CHECKIF(*ret_conn != NULL) {
+		/** This warning is to inform the user that the connection reference is not NULL and
+		 * it may lead to a potential connection object leakage.
+		 */
+		LOG_WRN("*conn should be unreferenced and initialized to NULL before passing to"
+			" %s", __func__);
+
+		if (IS_ENABLED(CONFIG_BT_CONN_CHECK_NULL_BEFORE_CREATE)) {
+			return -EINVAL;
+		}
+	}
 
 	err = conn_le_create_common_checks(synced_param->peer, conn_param);
 	if (err) {
