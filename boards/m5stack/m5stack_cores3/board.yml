@@ -4,3 +4,8 @@ board:
   vendor: m5stack
   socs:
   - name: esp32s3
+    variants:
+    - name: se
+      cpucluster: procpu
+    - name: se
+      cpucluster: appcpu
