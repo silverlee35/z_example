@@ -28,6 +28,10 @@ void lvgl_flush_thread_entry(void *arg1, void *arg2, void *arg3)
 		display_write(data->display_dev, flush.x, flush.y, &flush.desc,
 			      flush.buf);
 
+		if (lv_disp_flush_is_last(flush.disp_drv)) {
+			display_finalize_frame(data->display_dev);
+		}
+
 		lv_disp_flush_ready(flush.disp_drv);
 		k_sem_give(&flush_complete);
 	}
@@ -134,6 +138,11 @@ void lvgl_flush_display(struct lvgl_display_flush *request)
 
 	display_write(data->display_dev, request->x, request->y,
 		      &request->desc, request->buf);
+
+	if (lv_disp_flush_is_last(request->disp_drv)) {
+		display_finalize_frame(data->display_dev);
+	}
+
 	lv_disp_flush_ready(request->disp_drv);
 #endif
 }
